@@ -1,0 +1,26 @@
+{
+  "name": "zigzag-runner",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "pnpm run dev",
+    "build": "pnpm run lint && vite build",
+    "lint": "eslint .",
+    "dev": "vite"
+  },
+  "dependencies": {
+    "fflate": "^0.8.3",
+    "gsap": "^3.15.0",
+    "sharp": "^0.35.2",
+    "three": "^0.165.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.21.0",
+    "eslint": "^9.21.0",
+    "eslint-config-prettier": "^10.1.2",
+    "eslint-plugin-prettier": "^5.2.6",
+    "prettier": "^3.5.3",
+    "vite": "^6.2.0"
+  }
+}
