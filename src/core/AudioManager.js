@@ -101,9 +101,15 @@ export class AudioManager {
     this.sfxGain.gain.value = enabled ? 1 : 0;
   }
 
-  playJump() { this.playSound("jump", false, 0.8); }
-  playCoin() { this.playSound("coin", false, 1.0); }
-  playClick() { this.playSound("click", false, 1.0); }
+  playJump() {
+    this.playSound("jump", false, 0.8);
+  }
+  playCoin() {
+    this.playSound("coin", false, 1.0);
+  }
+  playClick() {
+    this.playSound("click", false, 1.0);
+  }
 
   playRun() {
     if (this.runSource) return;

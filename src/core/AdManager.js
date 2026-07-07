@@ -1,4 +1,4 @@
-import { gameAlert } from "../ui/UIUtils.js";
+
 
 export const AdManager = {
   showRewardedVideo: async () => {

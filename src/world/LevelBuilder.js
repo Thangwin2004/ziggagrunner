@@ -233,7 +233,10 @@ export class LevelBuilder {
     for (let i = this.coins.length - 1; i >= 0; i--) {
       let keep = false;
       for (const s of this.solids) {
-        if (this.coins[i].mesh.position.x === s.mesh.position.x && this.coins[i].mesh.position.z === s.mesh.position.z) {
+        if (
+          this.coins[i].mesh.position.x === s.mesh.position.x &&
+          this.coins[i].mesh.position.z === s.mesh.position.z
+        ) {
           keep = true;
           break;
         }
@@ -245,11 +248,15 @@ export class LevelBuilder {
     }
 
     // Truncate path
-    let pathIndex = this.path.findIndex(p => p.x === solidMatch.mesh.position.x && p.z === solidMatch.mesh.position.z);
+    let pathIndex = this.path.findIndex(
+      (p) =>
+        p.x === solidMatch.mesh.position.x &&
+        p.z === solidMatch.mesh.position.z,
+    );
     if (pathIndex !== -1) {
       this.path.splice(pathIndex + 1);
     }
-    
+
     this.lastX = solidMatch.mesh.position.x;
     this.lastZ = solidMatch.mesh.position.z;
 
@@ -334,20 +341,23 @@ export class LevelBuilder {
     ctx.strokeStyle = "#000000";
     ctx.strokeText("+" + amount, 64, 64);
     ctx.fillText("+" + amount, 64, 64);
-    
+
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
-    const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
-    
+    const material = new THREE.SpriteMaterial({
+      map: texture,
+      transparent: true,
+    });
+
     const sprite = new THREE.Sprite(material);
     sprite.scale.set(4, 4, 1);
     sprite.position.set(x, y + 2, z);
     this.scene.add(sprite);
-    
+
     this.vfxList.push({
       sprite,
       life: 1.0, // 1 second life
-      vy: 0.1 // speed up
+      vy: 0.1, // speed up
     });
   }
 
@@ -355,7 +365,8 @@ export class LevelBuilder {
     // Animate coins
     this.coins.forEach((coin) => {
       if (coin.active) {
-        coin.mesh.position.y = coin.baseY + Math.sin(Date.now() * 0.003 + coin.timeOffset) * 0.5;
+        coin.mesh.position.y =
+          coin.baseY + Math.sin(Date.now() * 0.003 + coin.timeOffset) * 0.5;
       }
     });
 
@@ -365,7 +376,7 @@ export class LevelBuilder {
       vfx.sprite.position.y += vfx.vy;
       vfx.life -= 0.02; // Roughly 50 frames
       vfx.sprite.material.opacity = vfx.life;
-      
+
       if (vfx.life <= 0) {
         this.scene.remove(vfx.sprite);
         vfx.sprite.material.map.dispose();

@@ -100,7 +100,11 @@ export class GameManager {
 
         // Regenerate a straight path ahead so the player has time to react
         if (closestSolid) {
-          this.levelBuilder.straightenPath(closestSolid, this.player.direction, 8);
+          this.levelBuilder.straightenPath(
+            closestSolid,
+            this.player.direction,
+            8,
+          );
         }
 
         this.state = "REVIVING";
@@ -209,15 +213,15 @@ export class GameManager {
       const amount = this.hasDoubledThisRun ? 2 : 1;
       this.coinsThisRun += amount;
       this.score += 100 * amount;
-      
+
       this.ui.updateHUD(this.score, this.coinsThisRun);
-      
+
       if (coin && coin.mesh) {
         this.levelBuilder.spawnCoinVFX(
-          coin.mesh.position.x, 
-          coin.mesh.position.y, 
+          coin.mesh.position.x,
+          coin.mesh.position.y,
           coin.mesh.position.z,
-          amount
+          amount,
         );
       }
     };
