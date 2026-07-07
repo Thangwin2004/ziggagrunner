@@ -1,5 +1,3 @@
-
-
 export const AdManager = {
   showRewardedVideo: async () => {
     console.log("[AdManager] Requesting Rewarded Video...");
