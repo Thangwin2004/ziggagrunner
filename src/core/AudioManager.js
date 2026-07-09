@@ -3,9 +3,10 @@ export class AudioManager {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     this.ctx = new AudioContext();
 
-    this.bgmGain = this.ctx.createGain(); // Not used for BGM anymore, but kept for compatibility if needed
+    this.bgmGain = this.ctx.createGain();
     this.sfxGain = this.ctx.createGain();
 
+    this.bgmGain.connect(this.ctx.destination);
     this.sfxGain.connect(this.ctx.destination);
 
     // States
