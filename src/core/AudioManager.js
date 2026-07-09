@@ -15,6 +15,7 @@ export class AudioManager {
 
     this.buffers = {};
     this.runSource = null;
+    this.globalPlaybackRate = 1.0;
 
     this.initBGM();
     this.loadSFX();
@@ -29,10 +30,11 @@ export class AudioManager {
   initBGM() {
     this.bgm = new Audio("/assest/music/IngameMusic1.wav");
     this.bgm.loop = true;
+    this.bgm.preservesPitch = false;
 
     const source = this.ctx.createMediaElementSource(this.bgm);
     const localGain = this.ctx.createGain();
-    localGain.gain.value = 0.2; // Base volume for BGM reduced
+    localGain.gain.value = 0.08; // Base volume for BGM reduced further
     source.connect(localGain);
     localGain.connect(this.bgmGain);
   }
@@ -54,7 +56,7 @@ export class AudioManager {
     this.loadAudioBuffer("/assest/music/Button1.mp3", "click");
     this.loadAudioBuffer("/assest/music/SurfMud2.mp3", "run");
     this.loadAudioBuffer("/assest/music/CharKnockDown.mp3", "fall");
-    this.loadAudioBuffer("/assest/music/Chest_Drop.mp3", "land");
+    this.loadAudioBuffer("/assest/music/CharSpawn.mp3", "land");
   }
 
   playSound(name, loop = false, volume = 1.0) {
@@ -64,6 +66,7 @@ export class AudioManager {
     const source = this.ctx.createBufferSource();
     source.buffer = this.buffers[name];
     source.loop = loop;
+    source.playbackRate.value = this.globalPlaybackRate;
 
     const gainNode = this.ctx.createGain();
     gainNode.gain.value = volume;
@@ -99,6 +102,16 @@ export class AudioManager {
   setSFXEnabled(enabled) {
     this.isSfxEnabled = enabled;
     this.sfxGain.gain.value = enabled ? 1 : 0;
+  }
+
+  setPlaybackRate(rate) {
+    this.globalPlaybackRate = Math.max(1.0, Math.min(rate, 3.0));
+    if (this.bgm) {
+      this.bgm.playbackRate = this.globalPlaybackRate;
+    }
+    if (this.runSource) {
+      this.runSource.playbackRate.value = this.globalPlaybackRate;
+    }
   }
 
   playJump() {

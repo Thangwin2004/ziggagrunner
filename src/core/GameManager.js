@@ -6,6 +6,7 @@ import { InputManager } from "./InputManager.js";
 import { getStats, saveStats } from "./Storage.js";
 import { AudioManager } from "./AudioManager.js";
 import { AdManager } from "./AdManager.js";
+import gsap from "gsap";
 
 export class GameManager {
   constructor(scene, camera, uiScene, uiCamera, domElement) {
@@ -111,15 +112,28 @@ export class GameManager {
         this.ui.clear();
         this.player.mesh.visible = true;
 
-        this.audio.playLand();
-        this.player.playLanding(() => {
-          this.state = "PLAYING";
-          this.player.playRun();
-          this.audio.playRun();
-          this.ui.showHUD();
-          this.ui.updateHUD(this.score, this.coinsThisRun);
+        // Ensure player starts high and falls down
+        this.player.mesh.position.y = 20;
+
+        // Fall animation using GSAP
+        gsap.to(this.player.mesh.position, {
+          y: 1.0, // Ground level
+          duration: 0.5,
+          ease: "power2.in",
+          onComplete: () => {
+            // Now they hit the ground!
+            this.audio.playLand();
+            this.player.playLanding(() => {
+              this.state = "PLAYING";
+              this.player.playRun();
+              this.audio.playRun();
+              this.ui.showHUD();
+              this.ui.updateHUD(this.score, this.coinsThisRun);
+            });
+          },
         });
-        this.ui.showHUD();
+
+        // Background tasks that run immediately upon revive initiation
         this.audio.playBGM();
         this.player.mesh.visible = true;
       } else {
@@ -197,6 +211,7 @@ export class GameManager {
     this.coinsThisRun = 0;
     this.hasRevivedThisRun = false;
     this.hasDoubledThisRun = false;
+    this.audio.setPlaybackRate(1.0);
 
     this.levelBuilder.clear();
     this.worldData = this.levelBuilder.buildLevel(0);
@@ -297,6 +312,7 @@ export class GameManager {
 
         // Increase speed slightly over time (scaled for new speed)
         this.player.speed += 0.0001;
+        this.audio.setPlaybackRate(this.player.speed / 0.08);
       }
 
       // Camera Isometric Follow (Zoomed out for 6x6 tiles)
