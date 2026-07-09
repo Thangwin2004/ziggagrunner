@@ -415,40 +415,40 @@ export class UIManager {
 
     const titleTex = this.createTextureFromCanvas(
       (ctx, w) => {
+        const titleGrad = ctx.createLinearGradient(0, 0, 0, 150);
+        titleGrad.addColorStop(0, "#ffea00");
+        titleGrad.addColorStop(1, "#ff8c00");
+
         // Logo Title
-        ctx.font = '900 64px "Segoe UI", Arial, sans-serif';
+        ctx.font = '900 60px "Segoe UI", Arial, sans-serif';
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-
-        // --- Line 1: LẠC BƯỚC ---
-        ctx.font = '900 64px "Segoe UI", Arial, sans-serif';
         ctx.lineJoin = "round";
 
-        ctx.lineWidth = 8;
-        ctx.strokeStyle = "#6a0a0a";
-        ctx.strokeText("LẠC BƯỚC", w / 2, 50);
+        ctx.lineWidth = 14;
+        ctx.strokeStyle = "#5a0000";
+        ctx.strokeText("HÀNH TRÌNH", w / 2, 50);
 
-        ctx.fillStyle = "#ffea00";
-        ctx.fillText("LẠC BƯỚC", w / 2, 50);
+        ctx.fillStyle = titleGrad;
+        ctx.fillText("HÀNH TRÌNH", w / 2, 50);
 
         // --- Line 2: ZIGZAG ---
         ctx.font = '900 84px "Segoe UI", Arial, sans-serif';
-
-        ctx.lineWidth = 9;
-        ctx.strokeStyle = "#6a0a0a";
+        ctx.lineWidth = 18;
+        ctx.strokeStyle = "#5a0000";
         ctx.strokeText("ZIGZAG", w / 2, 135);
 
-        ctx.fillStyle = "#ffea00";
+        ctx.fillStyle = titleGrad;
         ctx.fillText("ZIGZAG", w / 2, 135);
 
         // --- Subtitle ---
-        ctx.font = '900 34px "Segoe UI", Arial, sans-serif';
-        ctx.lineWidth = 6;
+        ctx.font = '900 45px "Segoe UI", Arial, sans-serif';
+        ctx.lineWidth = 10;
         ctx.strokeStyle = "#000000";
-        ctx.strokeText("CHẠY VÔ TẬN", w / 2, 205);
+        ctx.strokeText("VÔ CỰC", w / 2, 205);
 
         ctx.fillStyle = "#ffffff";
-        ctx.fillText("CHẠY VÔ TẬN", w / 2, 205);
+        ctx.fillText("VÔ CỰC", w / 2, 205);
 
         // Yellow Line
         ctx.beginPath();
