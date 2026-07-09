@@ -49,10 +49,10 @@ export class AudioManager {
   }
 
   loadSFX() {
-    this.loadAudioBuffer("/assest/music/Bounce1.mp3", "jump");
+    this.loadAudioBuffer("/assest/music/Bounce2.mp3", "jump");
     this.loadAudioBuffer("/assest/music/LabelCollect.mp3", "coin");
     this.loadAudioBuffer("/assest/music/Button1.mp3", "click");
-    this.loadAudioBuffer("/assest/music/SurfMud1.mp3", "run");
+    this.loadAudioBuffer("/assest/music/SurfMud2.mp3", "run");
     this.loadAudioBuffer("/assest/music/CharKnockDown.mp3", "fall");
     this.loadAudioBuffer("/assest/music/Chest_Drop.mp3", "land");
   }
