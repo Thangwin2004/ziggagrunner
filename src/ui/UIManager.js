@@ -93,6 +93,25 @@ export class UIManager {
     }
   }
 
+  makePopupResponsive(overlay, card) {
+    const handleResize = () => {
+      const scale = Math.min(
+        1.0,
+        window.innerWidth / 450,
+        window.innerHeight / 650,
+      );
+      card.style.zoom = scale;
+    };
+    window.addEventListener("resize", handleResize);
+    handleResize();
+
+    const originalRemove = overlay.remove.bind(overlay);
+    overlay.remove = () => {
+      window.removeEventListener("resize", handleResize);
+      originalRemove();
+    };
+  }
+
   clear() {
     // Clear HTML popups
     const settings = document.getElementById("game-settings-overlay-id");
@@ -635,6 +654,7 @@ export class UIManager {
 
     overlay.appendChild(card);
     const appContainer = document.getElementById("app") || document.body;
+    this.makePopupResponsive(overlay, card);
     appContainer.appendChild(overlay);
 
     requestAnimationFrame(() => {
@@ -749,6 +769,7 @@ export class UIManager {
 
     overlay.appendChild(card);
     const appContainer = document.getElementById("app") || document.body;
+    this.makePopupResponsive(overlay, card);
     appContainer.appendChild(overlay);
 
     requestAnimationFrame(() => {
@@ -884,6 +905,7 @@ export class UIManager {
     card.appendChild(btnContainer);
     overlay.appendChild(card);
 
+    this.makePopupResponsive(overlay, card);
     (document.getElementById("app") || document.body).appendChild(overlay);
 
     requestAnimationFrame(() => {
@@ -1161,6 +1183,7 @@ export class UIManager {
 
     overlay.appendChild(card);
     const appContainer = document.getElementById("app") || document.body;
+    this.makePopupResponsive(overlay, card);
     appContainer.appendChild(overlay);
 
     requestAnimationFrame(() => {
