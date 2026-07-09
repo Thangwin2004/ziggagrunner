@@ -60,7 +60,7 @@ export class AudioManager {
     this.loadAudioBuffer("/assest/music/Bounce2.mp3", "jump");
     this.loadAudioBuffer("/assest/music/LabelCollect.mp3", "coin");
     this.loadAudioBuffer("/assest/music/Button1.mp3", "click");
-    this.loadAudioBuffer("/assest/music/SurfMud2.mp3", "run");
+    // this.loadAudioBuffer("/assest/music/SurfMud2.mp3", "run"); // Disabled due to noise and out-of-sync
     this.loadAudioBuffer("/assest/music/CharKnockDown.mp3", "fall");
     this.loadAudioBuffer("/assest/music/CharSpawn.mp3", "land");
   }
@@ -133,19 +133,11 @@ export class AudioManager {
   }
 
   playRun() {
-    if (this.runSource) return;
-    this.runSource = this.playSound("run", true, 0.4);
+    // Disabled: running footstep sounds were too noisy and out of sync with animation
   }
 
   stopRun() {
-    if (this.runSource) {
-      try {
-        this.runSource.stop();
-      } catch (e) {
-        console.warn("Failed to stop run source", e);
-      }
-      this.runSource = null;
-    }
+    // Disabled
   }
 
   playFall() {
