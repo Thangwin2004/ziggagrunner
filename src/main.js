@@ -13,11 +13,12 @@ const camera = new THREE.PerspectiveCamera(60, w / h, 0.1, 1000);
 camera.position.z = 25;
 
 const renderer = new THREE.WebGLRenderer({
-  antialias: true,
+  antialias: false,
   powerPreference: "high-performance",
 });
 renderer.setSize(w, h);
-renderer.setPixelRatio(window.devicePixelRatio);
+// Cap pixel ratio to 1.5 to prevent extreme lag on retina/mobile screens (which can be 3x or 4x)
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 renderer.shadowMap.enabled = false; // Disabled to reduce lag on mobile
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.0;

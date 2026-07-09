@@ -9,6 +9,8 @@ export class LevelBuilder {
     this.coins = [];
     this.decorations = [];
     this.vfxList = [];
+    this.solidPool = [];
+    this.coinPool = [];
 
     // Load Textures
     const textureLoader = new THREE.TextureLoader();
@@ -63,41 +65,34 @@ export class LevelBuilder {
 
     this.materials = {
       wall: [
-        new THREE.MeshStandardMaterial({
+        new THREE.MeshLambertMaterial({
           map: wallTex,
-          roughness: 0.9,
           color: 0xdddddd,
         }),
-        new THREE.MeshStandardMaterial({
+        new THREE.MeshLambertMaterial({
           map: wallTex,
-          roughness: 0.9,
           color: 0xdddddd,
         }),
-        new THREE.MeshStandardMaterial({ map: roadTex, roughness: 0.9 }),
-        new THREE.MeshStandardMaterial({
+        new THREE.MeshLambertMaterial({ map: roadTex }),
+        new THREE.MeshLambertMaterial({
           map: wallTex,
-          roughness: 0.9,
           color: 0xdddddd,
         }),
-        new THREE.MeshStandardMaterial({
+        new THREE.MeshLambertMaterial({
           map: wallTex,
-          roughness: 0.9,
           color: 0xdddddd,
         }),
-        new THREE.MeshStandardMaterial({
+        new THREE.MeshLambertMaterial({
           map: wallTex,
-          roughness: 0.9,
           color: 0xdddddd,
         }),
       ],
-      wallDark: new THREE.MeshStandardMaterial({
+      wallDark: new THREE.MeshLambertMaterial({
         map: wallTex,
-        roughness: 0.9,
         color: 0x999999,
       }),
-      coinMesh: new THREE.MeshStandardMaterial({
+      coinMesh: new THREE.MeshLambertMaterial({
         map: coinTex,
-        roughness: 0.8,
       }),
       coinSprite: new THREE.SpriteMaterial({ map: coinTex }),
       cloudMat: new THREE.SpriteMaterial({
@@ -121,8 +116,14 @@ export class LevelBuilder {
   }
 
   clear() {
-    this.solids.forEach((s) => this.scene.remove(s.mesh));
-    this.coins.forEach((c) => this.scene.remove(c.mesh));
+    this.solids.forEach((s) => {
+      this.scene.remove(s.mesh);
+      this.solidPool.push(s.mesh);
+    });
+    this.coins.forEach((c) => {
+      this.scene.remove(c.mesh);
+      this.coinPool.push(c.mesh);
+    });
     this.decorations.forEach((d) => this.scene.remove(d));
     this.regions.forEach((r) => this.scene.remove(r));
     this.vfxList.forEach((vfx) => {
@@ -225,7 +226,9 @@ export class LevelBuilder {
 
     // Remove all blocks after the matched block
     for (let i = solidIndex + 1; i < this.solids.length; i++) {
-      this.scene.remove(this.solids[i].mesh);
+      const mesh = this.solids[i].mesh;
+      this.scene.remove(mesh);
+      this.solidPool.push(mesh);
     }
     this.solids.splice(solidIndex + 1);
 
@@ -242,7 +245,9 @@ export class LevelBuilder {
         }
       }
       if (!keep) {
-        this.scene.remove(this.coins[i].mesh);
+        const mesh = this.coins[i].mesh;
+        this.scene.remove(mesh);
+        this.coinPool.push(mesh);
         this.coins.splice(i, 1);
       }
     }
@@ -278,6 +283,27 @@ export class LevelBuilder {
     }
   }
 
+  getSolidMesh() {
+    if (this.solidPool.length > 0) {
+      return this.solidPool.pop();
+    }
+    const mesh = new THREE.Mesh(this.geometries.box, this.materials.wall);
+    mesh.castShadow = false;
+    mesh.receiveShadow = false;
+    return mesh;
+  }
+
+  getCoinMesh() {
+    if (this.coinPool.length > 0) {
+      const coin = this.coinPool.pop();
+      coin.visible = true;
+      return coin;
+    }
+    const coin = new THREE.Sprite(this.materials.coinSprite);
+    coin.scale.set(3, 3, 1);
+    return coin;
+  }
+
   spawnBlockMesh(index) {
     if (index < 0 || index >= this.path.length) return;
 
@@ -286,10 +312,8 @@ export class LevelBuilder {
     const z = curr.z;
 
     // Surface block (thinner and positioned at y=-0.5 so top is at y=0)
-    const mesh = new THREE.Mesh(this.geometries.box, this.materials.wall);
+    const mesh = this.getSolidMesh();
     mesh.position.set(x, -0.5, z);
-    mesh.castShadow = false;
-    mesh.receiveShadow = false;
     this.scene.add(mesh);
     this.solids.push({
       mesh,
@@ -298,8 +322,7 @@ export class LevelBuilder {
 
     // 10% chance to spawn a coin
     if (Math.random() < 0.1 && (x !== 0 || z !== 0)) {
-      const coin = new THREE.Sprite(this.materials.coinSprite);
-      coin.scale.set(3, 3, 1);
+      const coin = this.getCoinMesh();
       coin.position.set(x, 2, z);
 
       this.scene.add(coin);
@@ -401,6 +424,7 @@ export class LevelBuilder {
       if (dist > 30) {
         // Passed it safely
         this.scene.remove(solid.mesh);
+        this.solidPool.push(solid.mesh);
         this.solids.splice(i, 1);
       }
     }
