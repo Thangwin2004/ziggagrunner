@@ -29,7 +29,6 @@ export class UIManager {
     this.scene.add(this.hudGroup);
 
     this.scoreSprite = null;
-    this.coinSprite = null;
 
     domElement.addEventListener("pointermove", this.onPointerMove.bind(this));
     domElement.addEventListener("pointerdown", this.onPointerDown.bind(this));
@@ -956,14 +955,6 @@ export class UIManager {
     );
     this.hudGroup.add(this.scoreSprite);
 
-    this.coinSprite = createTextSprite("🥜: 0");
-    this.coinSprite.position.set(
-      -window.innerWidth / 2 + 120,
-      window.innerHeight / 2 - 80,
-      0,
-    );
-    this.hudGroup.add(this.coinSprite);
-
     const settingsBtn = this.createIconButton(
       "/assest/iconbtn/setting_btn.png",
       () => {
@@ -1027,11 +1018,6 @@ export class UIManager {
       this.scoreSprite.material.dispose();
       this.hudGroup.remove(this.scoreSprite);
     }
-    if (this.coinSprite) {
-      this.coinSprite.material.map.dispose();
-      this.coinSprite.material.dispose();
-      this.hudGroup.remove(this.coinSprite);
-    }
 
     const createTextSprite = (text) => {
       const tex = this.createTextureFromCanvas(
@@ -1061,14 +1047,6 @@ export class UIManager {
       0,
     );
     this.hudGroup.add(this.scoreSprite);
-
-    this.coinSprite = createTextSprite("🥜: " + coins);
-    this.coinSprite.position.set(
-      -window.innerWidth / 2 + 120,
-      window.innerHeight / 2 - 80,
-      0,
-    );
-    this.hudGroup.add(this.coinSprite);
   }
 
   showAchievements(stats) {
