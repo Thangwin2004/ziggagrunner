@@ -1012,7 +1012,7 @@ export class UIManager {
     });
   }
 
-  updateHUD(score, coins) {
+  updateHUD(score) {
     if (this.scoreSprite) {
       this.scoreSprite.material.map.dispose();
       this.scoreSprite.material.dispose();
