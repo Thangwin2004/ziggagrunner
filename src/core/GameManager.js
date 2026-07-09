@@ -43,11 +43,17 @@ export class GameManager {
     this.ui.onHome = () => this.switchState("MAIN_MENU");
     this.ui.onReplay = () => this.switchState("PLAYING");
     this.ui.onSettings = () => {
-      if (this.state === "PLAYING") this.state = "PAUSED";
+      if (this.state === "PLAYING") {
+        this.state = "PAUSED";
+        this.audio.stopRun();
+      }
       this.ui.showSettings(this.state === "PAUSED");
     };
     this.ui.onContinue = () => {
-      if (this.state === "PAUSED") this.state = "PLAYING";
+      if (this.state === "PAUSED") {
+        this.state = "PLAYING";
+        this.audio.playRun();
+      }
     };
     this.ui.onAchievements = () => this.ui.showAchievements(getStats());
 
