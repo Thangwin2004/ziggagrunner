@@ -211,7 +211,6 @@ export class GameManager {
     this.coinsThisRun = 0;
     this.hasRevivedThisRun = false;
     this.hasDoubledThisRun = false;
-    this.audio.setPlaybackRate(1.0);
 
     this.levelBuilder.clear();
     this.worldData = this.levelBuilder.buildLevel(0);
@@ -312,7 +311,6 @@ export class GameManager {
 
         // Increase speed slightly over time (scaled for new speed)
         this.player.speed += 0.0001;
-        this.audio.setPlaybackRate(this.player.speed / 0.08);
       }
 
       // Camera Isometric Follow (Zoomed out for 6x6 tiles)

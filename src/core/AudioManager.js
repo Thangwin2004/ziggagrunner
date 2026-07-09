@@ -3,10 +3,9 @@ export class AudioManager {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     this.ctx = new AudioContext();
 
-    this.bgmGain = this.ctx.createGain();
+    this.bgmGain = this.ctx.createGain(); // Not used for BGM anymore, but kept for compatibility if needed
     this.sfxGain = this.ctx.createGain();
 
-    this.bgmGain.connect(this.ctx.destination);
     this.sfxGain.connect(this.ctx.destination);
 
     // States
@@ -15,9 +14,12 @@ export class AudioManager {
 
     this.buffers = {};
     this.runSource = null;
-    this.globalPlaybackRate = 1.0;
 
-    this.initBGM();
+    this.bgmBufferName = "bgm";
+    this.bgmSource = null;
+    this.bgmGain.gain.value = 0.08; // Base volume for BGM
+
+    this.loadBGM();
     this.loadSFX();
   }
 
@@ -27,16 +29,19 @@ export class AudioManager {
     }
   }
 
-  initBGM() {
-    this.bgm = new Audio("/assest/music/IngameMusic1.wav");
-    this.bgm.loop = true;
-    this.bgm.preservesPitch = false;
+  async loadBGM() {
+    try {
+      const response = await window.fetch("/assest/music/IngameMusic1.wav");
+      const arrayBuffer = await response.arrayBuffer();
+      const audioBuffer = await this.ctx.decodeAudioData(arrayBuffer);
+      this.buffers[this.bgmBufferName] = audioBuffer;
 
-    const source = this.ctx.createMediaElementSource(this.bgm);
-    const localGain = this.ctx.createGain();
-    localGain.gain.value = 0.08; // Base volume for BGM reduced further
-    source.connect(localGain);
-    localGain.connect(this.bgmGain);
+      if (this.isBgmEnabled && !this.bgmSource) {
+        this.playBGM();
+      }
+    } catch (e) {
+      console.error("Error loading BGM", e);
+    }
   }
 
   async loadAudioBuffer(url, name) {
@@ -66,7 +71,6 @@ export class AudioManager {
     const source = this.ctx.createBufferSource();
     source.buffer = this.buffers[name];
     source.loop = loop;
-    source.playbackRate.value = this.globalPlaybackRate;
 
     const gainNode = this.ctx.createGain();
     gainNode.gain.value = volume;
@@ -80,38 +84,41 @@ export class AudioManager {
 
   playBGM() {
     this.resumeContext();
-    // Only call play if it's currently paused
-    if (this.bgm.paused) {
-      this.bgm.play().catch((e) => console.log("BGM play deferred", e));
-    }
+    if (!this.buffers[this.bgmBufferName]) return; // Not loaded yet
+    if (this.bgmSource) return; // Already playing
+
+    this.bgmSource = this.ctx.createBufferSource();
+    this.bgmSource.buffer = this.buffers[this.bgmBufferName];
+    this.bgmSource.loop = true;
+
+    this.bgmSource.connect(this.bgmGain);
+    this.bgmSource.start(0);
   }
 
   stopBGM() {
-    // We NEVER pause the HTML Audio element to avoid iOS Safari AudioContext suspension
-    // Instead we just mute it via GainNode if needed, or let it play silently
+    if (this.bgmSource) {
+      try {
+        this.bgmSource.stop();
+      } catch (e) {
+        console.warn("Failed to stop BGM", e);
+      }
+      this.bgmSource = null;
+    }
   }
 
   setBGMEnabled(enabled) {
     this.isBgmEnabled = enabled;
-    this.bgmGain.gain.value = enabled ? 1 : 0;
+    this.bgmGain.gain.value = enabled ? 0.08 : 0;
     if (enabled) {
       this.playBGM();
+    } else {
+      this.stopBGM();
     }
   }
 
   setSFXEnabled(enabled) {
     this.isSfxEnabled = enabled;
     this.sfxGain.gain.value = enabled ? 1 : 0;
-  }
-
-  setPlaybackRate(rate) {
-    this.globalPlaybackRate = Math.max(1.0, Math.min(rate, 3.0));
-    if (this.bgm) {
-      this.bgm.playbackRate = this.globalPlaybackRate;
-    }
-    if (this.runSource) {
-      this.runSource.playbackRate.value = this.globalPlaybackRate;
-    }
   }
 
   playJump() {

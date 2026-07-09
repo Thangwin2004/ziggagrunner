@@ -423,10 +423,7 @@ export class UIManager {
 
         // --- Line 1: LẠC BƯỚC ---
         ctx.font = '900 64px "Segoe UI", Arial, sans-serif';
-        ctx.lineWidth = 14;
-        ctx.strokeStyle = "#3a0c0c";
         ctx.lineJoin = "round";
-        ctx.strokeText("LẠC BƯỚC", w / 2, 50);
 
         ctx.lineWidth = 8;
         ctx.strokeStyle = "#6a0a0a";
@@ -437,9 +434,6 @@ export class UIManager {
 
         // --- Line 2: ZIGZAG ---
         ctx.font = '900 84px "Segoe UI", Arial, sans-serif';
-        ctx.lineWidth = 16;
-        ctx.strokeStyle = "#3a0c0c";
-        ctx.strokeText("ZIGZAG", w / 2, 135);
 
         ctx.lineWidth = 9;
         ctx.strokeStyle = "#6a0a0a";
