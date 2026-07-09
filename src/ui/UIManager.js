@@ -421,32 +421,46 @@ export class UIManager {
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
 
-        // Drop Shadow
+        // --- Line 1: LẠC BƯỚC ---
+        ctx.font = '900 64px "Segoe UI", Arial, sans-serif';
         ctx.lineWidth = 14;
         ctx.strokeStyle = "#3a0c0c";
         ctx.lineJoin = "round";
-        ctx.strokeText("LẠC BƯỚC ZIGZAG", w / 2, 60);
+        ctx.strokeText("LẠC BƯỚC", w / 2, 50);
 
         ctx.lineWidth = 8;
         ctx.strokeStyle = "#6a0a0a";
-        ctx.strokeText("LẠC BƯỚC ZIGZAG", w / 2, 60);
+        ctx.strokeText("LẠC BƯỚC", w / 2, 50);
 
         ctx.fillStyle = "#ffea00";
-        ctx.fillText("LẠC BƯỚC ZIGZAG", w / 2, 60);
+        ctx.fillText("LẠC BƯỚC", w / 2, 50);
 
-        // Subtitle
+        // --- Line 2: ZIGZAG ---
+        ctx.font = '900 84px "Segoe UI", Arial, sans-serif';
+        ctx.lineWidth = 16;
+        ctx.strokeStyle = "#3a0c0c";
+        ctx.strokeText("ZIGZAG", w / 2, 135);
+
+        ctx.lineWidth = 9;
+        ctx.strokeStyle = "#6a0a0a";
+        ctx.strokeText("ZIGZAG", w / 2, 135);
+
+        ctx.fillStyle = "#ffea00";
+        ctx.fillText("ZIGZAG", w / 2, 135);
+
+        // --- Subtitle ---
         ctx.font = '900 34px "Segoe UI", Arial, sans-serif';
         ctx.lineWidth = 6;
         ctx.strokeStyle = "#000000";
-        ctx.strokeText("CHẠY VÔ TẬN", w / 2, 115);
+        ctx.strokeText("CHẠY VÔ TẬN", w / 2, 205);
 
         ctx.fillStyle = "#ffffff";
-        ctx.fillText("CHẠY VÔ TẬN", w / 2, 115);
+        ctx.fillText("CHẠY VÔ TẬN", w / 2, 205);
 
         // Yellow Line
         ctx.beginPath();
-        ctx.moveTo(w / 2 - 250, 145);
-        ctx.lineTo(w / 2 + 250, 145);
+        ctx.moveTo(w / 2 - 200, 245);
+        ctx.lineTo(w / 2 + 200, 245);
         ctx.lineWidth = 4;
         ctx.strokeStyle = "#ffcc00";
         ctx.stroke();
@@ -455,12 +469,12 @@ export class UIManager {
         ctx.font = '900 28px "Segoe UI", Arial, sans-serif';
         ctx.lineWidth = 5;
         ctx.strokeStyle = "#000000";
-        ctx.strokeText("🏆 KỶ LỤC ĐIỂM: " + highScore, w / 2, 185);
+        ctx.strokeText("🏆 KỶ LỤC ĐIỂM: " + highScore, w / 2, 290);
         ctx.fillStyle = "#ffcc00";
-        ctx.fillText("🏆 KỶ LỤC ĐIỂM: " + highScore, w / 2, 185);
+        ctx.fillText("🏆 KỶ LỤC ĐIỂM: " + highScore, w / 2, 290);
       },
-      800,
-      250,
+      600,
+      350,
     );
     const titleSprite = new THREE.Sprite(
       new THREE.SpriteMaterial({ map: titleTex }),
@@ -468,23 +482,17 @@ export class UIManager {
 
     // Scale dynamically based on screen width to fit all devices
     const screenW = window.innerWidth;
-    let scaleW = 800;
-    let scaleH = 250;
-    if (screenW < 800) {
-      // The main text "LẠC BƯỚC ZIGZAG" is ~525px wide in the canvas.
-      // We scale it so the text fits exactly on screen with a small 20px padding (10px each side).
-      const textWidthInCanvas = 525;
-      const targetTextWidthOnScreen = screenW - 20;
-      const ratio = targetTextWidthOnScreen / textWidthInCanvas;
-
-      const finalRatio = Math.min(1.0, ratio);
-
-      scaleW = 800 * finalRatio;
-      scaleH = 250 * finalRatio;
+    let scaleW = 600;
+    let scaleH = 350;
+    if (screenW < 600) {
+      // Scale canvas so it fits exactly on screen with 20px padding
+      const ratio = (screenW - 20) / 600;
+      scaleW *= ratio;
+      scaleH *= ratio;
     }
 
     titleSprite.scale.set(scaleW, scaleH, 1);
-    titleSprite.position.set(0, 120, 0);
+    titleSprite.position.set(0, 130, 0);
     this.activeGroup.add(titleSprite);
 
     const playBtn = this.createWideButton(
