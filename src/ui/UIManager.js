@@ -435,7 +435,7 @@ export class UIManager {
         ctx.fillText("LẠC BƯỚC ZIGZAG", w / 2, 60);
 
         // Subtitle
-        ctx.font = '900 28px "Segoe UI", Arial, sans-serif';
+        ctx.font = '900 34px "Segoe UI", Arial, sans-serif';
         ctx.lineWidth = 6;
         ctx.strokeStyle = "#000000";
         ctx.strokeText("CHẠY VÔ TẬN", w / 2, 115);
@@ -451,8 +451,8 @@ export class UIManager {
         ctx.strokeStyle = "#ffcc00";
         ctx.stroke();
 
-        // Score
-        ctx.font = '900 24px "Segoe UI", Arial, sans-serif';
+        // Highscore
+        ctx.font = '900 28px "Segoe UI", Arial, sans-serif';
         ctx.lineWidth = 5;
         ctx.strokeStyle = "#000000";
         ctx.strokeText("🏆 KỶ LỤC ĐIỂM: " + highScore, w / 2, 185);
@@ -470,10 +470,17 @@ export class UIManager {
     const screenW = window.innerWidth;
     let scaleW = 800;
     let scaleH = 250;
-    if (screenW < 850) {
-      const ratio = (screenW - 40) / 800; // Leave 20px padding on each side
-      scaleW *= ratio;
-      scaleH *= ratio;
+    if (screenW < 800) {
+      // The main text "LẠC BƯỚC ZIGZAG" is ~525px wide in the canvas.
+      // We scale it so the text fits exactly on screen with a small 20px padding (10px each side).
+      const textWidthInCanvas = 525;
+      const targetTextWidthOnScreen = screenW - 20;
+      const ratio = targetTextWidthOnScreen / textWidthInCanvas;
+
+      const finalRatio = Math.min(1.0, ratio);
+
+      scaleW = 800 * finalRatio;
+      scaleH = 250 * finalRatio;
     }
 
     titleSprite.scale.set(scaleW, scaleH, 1);
