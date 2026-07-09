@@ -18,8 +18,7 @@ const renderer = new THREE.WebGLRenderer({
 });
 renderer.setSize(w, h);
 renderer.setPixelRatio(window.devicePixelRatio);
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.enabled = false; // Disabled to reduce lag on mobile
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.0;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -40,16 +39,7 @@ scene.add(hemiLight);
 
 const dirLight = new THREE.DirectionalLight(0xffffff, 1.8);
 dirLight.position.set(20, 40, -20);
-dirLight.castShadow = true;
-dirLight.shadow.mapSize.width = 2048; // High-res shadows
-dirLight.shadow.mapSize.height = 2048;
-dirLight.shadow.camera.near = 0.5;
-dirLight.shadow.camera.far = 150;
-dirLight.shadow.camera.left = -50;
-dirLight.shadow.camera.right = 50;
-dirLight.shadow.camera.top = 50;
-dirLight.shadow.camera.bottom = -50;
-dirLight.shadow.bias = -0.0005; // Prevent shadow acne
+dirLight.castShadow = false; // Disabled to reduce lag
 scene.add(dirLight);
 
 // 3. Setup UI Scene (Dual Scene)

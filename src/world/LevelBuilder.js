@@ -288,8 +288,8 @@ export class LevelBuilder {
     // Surface block (thinner and positioned at y=-0.5 so top is at y=0)
     const mesh = new THREE.Mesh(this.geometries.box, this.materials.wall);
     mesh.position.set(x, -0.5, z);
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
+    mesh.castShadow = false;
+    mesh.receiveShadow = false;
     this.scene.add(mesh);
     this.solids.push({
       mesh,

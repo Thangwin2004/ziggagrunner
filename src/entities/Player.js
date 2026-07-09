@@ -64,8 +64,8 @@ export class Player {
         object.traverse((child) => {
           if (child.isMesh) {
             console.log("Mesh name in FBX:", child.name);
-            child.castShadow = true;
-            child.receiveShadow = true;
+            child.castShadow = false;
+            child.receiveShadow = false;
 
             // Hide helper geometry or STATIC meshes (which cause the "2 layers" overlapping bug)
             const lowerName = child.name.toLowerCase();
