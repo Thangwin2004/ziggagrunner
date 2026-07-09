@@ -1097,9 +1097,9 @@ export class UIManager {
     const thead = document.createElement("thead");
     thead.innerHTML = `
       <tr>
-        <th>HẠNG</th>
-        <th>TÊN</th>
-        <th>ĐIỂM SỐ</th>
+        <th style="text-align: left; padding-left: 10px;">HẠNG</th>
+        <th style="text-align: center;">TÊN</th>
+        <th style="text-align: right; padding-right: 10px;">ĐIỂM SỐ</th>
       </tr>
     `;
     table.appendChild(thead);
@@ -1109,9 +1109,9 @@ export class UIManager {
       const row = document.createElement("tr");
       if (i < 3) row.className = `rank-${i}`;
       row.innerHTML = `
-        <td>${r.medal}</td>
-        <td>${r.name}</td>
-        <td>${r.score}</td>
+        <td style="text-align: left; padding-left: 20px;">${r.medal}</td>
+        <td style="text-align: center;">${r.name}</td>
+        <td style="text-align: right; padding-right: 10px;">${r.score}</td>
       `;
       tbody.appendChild(row);
     });
