@@ -1078,15 +1078,36 @@ export class UIManager {
     userText.innerText = "Tài khoản: Khách (Điểm lưu thiết bị)";
     card.appendChild(userText);
 
-    const mockRankings = [
-      { medal: "🥇", name: "Lạc Lạc", score: 9999 },
-      { medal: "🥈", name: "Bé Lạc", score: 8500 },
-      { medal: "🥉", name: "Trưởng Bản", score: 7200 },
-      { medal: "4", name: "Người Lạ", score: 5000 },
-      { medal: "5", name: "Dân Làng", score: 3000 },
-      { medal: "6", name: "Khách", score: 1500 },
-      { medal: "7", name: "Gà Con", score: 100 },
+    const personalScore = stats?.highScore || 0;
+
+    let rankings = [
+      { name: "Lạc Lạc", score: 9999 },
+      { name: "Bé Lạc", score: 8500 },
+      { name: "Trưởng Bản", score: 7200 },
+      { name: "Người Lạ", score: 5000 },
+      { name: "Dân Làng", score: 3000 },
+      { name: "Khách", score: 1500 },
+      { name: "Gà Con", score: 100 },
     ];
+
+    if (personalScore > 0) {
+      rankings = rankings.filter((r) => r.name !== "Khách");
+      rankings.push({
+        name: "Bạn (Khách)",
+        score: personalScore,
+        isPlayer: true,
+      });
+    }
+
+    rankings.sort((a, b) => b.score - a.score);
+    rankings = rankings.slice(0, 7);
+
+    rankings.forEach((r, i) => {
+      if (i === 0) r.medal = "🥇";
+      else if (i === 1) r.medal = "🥈";
+      else if (i === 2) r.medal = "🥉";
+      else r.medal = (i + 1).toString();
+    });
 
     const tableContainer = document.createElement("div");
     tableContainer.className = "game-achievements-table-container";
@@ -1105,9 +1126,10 @@ export class UIManager {
     table.appendChild(thead);
 
     const tbody = document.createElement("tbody");
-    mockRankings.forEach((r, i) => {
+    rankings.forEach((r, i) => {
       const row = document.createElement("tr");
       if (i < 3) row.className = `rank-${i}`;
+      if (r.isPlayer) row.classList.add("highlighted");
       row.innerHTML = `
         <td style="text-align: left; padding-left: 20px;">${r.medal}</td>
         <td style="text-align: center;">${r.name}</td>
@@ -1120,7 +1142,6 @@ export class UIManager {
     card.appendChild(tableContainer);
 
     // Personal Best Footer
-    const personalScore = stats?.highScore || 0;
     const footer = document.createElement("div");
     footer.className = "game-achievements-footer";
 
