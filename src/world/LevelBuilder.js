@@ -357,7 +357,7 @@ export class LevelBuilder {
     canvas.height = 128;
     const ctx = canvas.getContext("2d");
     ctx.font = "Bold 50px Arial";
-    ctx.fillStyle = "#FFD700"; // Gold
+    ctx.fillStyle = "#FFF59D"; // Gold matching theme
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.lineWidth = 4;
