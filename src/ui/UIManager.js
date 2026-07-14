@@ -159,7 +159,7 @@ export class UIManager {
     return this.createTextureFromCanvas(
       (ctx, w, h) => {
         // Base shadow color
-        ctx.fillStyle = color === "green" ? "#087903" : "#b3003b";
+        ctx.fillStyle = color === "green" ? "#AB47BC" : "#AB47BC";
         ctx.beginPath();
         ctx.roundRect(0, 10, w, h - 10, h / 2);
         ctx.fill();
@@ -167,11 +167,11 @@ export class UIManager {
         // Gradient Base
         const gradient = ctx.createLinearGradient(0, 0, 0, h - 10);
         if (color === "green") {
-          gradient.addColorStop(0, "#95ED39");
-          gradient.addColorStop(1, "#4EAC0C");
+          gradient.addColorStop(0, "#E1BEE7");
+          gradient.addColorStop(1, "#AB47BC");
         } else {
-          gradient.addColorStop(0, "#ff3377");
-          gradient.addColorStop(1, "#cc0044");
+          gradient.addColorStop(0, "#E1BEE7");
+          gradient.addColorStop(1, "#AB47BC");
         }
 
         ctx.fillStyle = gradient;
@@ -295,7 +295,7 @@ export class UIManager {
     height = 300,
     ribbonColor = "blue",
     borderStyle = "white",
-    outerStrokeColor = "#6a0dad",
+    outerStrokeColor = "#7B1FA2",
   ) {
     return this.createTextureFromCanvas(
       (ctx, w, h) => {
@@ -323,31 +323,31 @@ export class UIManager {
           ctx.fill();
 
           // Yellow Inner Stroke
-          ctx.strokeStyle = "#ffcc00";
+          ctx.strokeStyle = "#E1BEE7";
           ctx.lineWidth = 3;
           ctx.beginPath();
           ctx.roundRect(pad + 6, pad + 6, cardW - 12, cardH - 12, 14);
           ctx.stroke();
 
           // Inner Card Face
-          ctx.fillStyle = "#fdfbf5";
+          ctx.fillStyle = "#F3E5F5";
           ctx.beginPath();
           ctx.roundRect(pad + 8, pad + 8, cardW - 16, cardH - 16, 12);
           ctx.fill();
         } else {
           // Dark Purple (Leaderboard style)
-          ctx.fillStyle = "#1c053a";
+          ctx.fillStyle = "#4A148C";
           ctx.beginPath();
           ctx.roundRect(pad, pad + 8, cardW, cardH, 20);
           ctx.fill();
-          ctx.fillStyle = "#4b0082";
+          ctx.fillStyle = "#7B1FA2";
           ctx.beginPath();
           ctx.roundRect(pad, pad, cardW, cardH, 20);
           ctx.fill();
-          ctx.strokeStyle = "#ffff00";
+          ctx.strokeStyle = "#E1BEE7";
           ctx.lineWidth = 3;
           ctx.stroke();
-          ctx.fillStyle = "#f8f4e6";
+          ctx.fillStyle = "#F3E5F5";
           ctx.beginPath();
           ctx.roundRect(pad + 10, pad + 10, cardW - 20, cardH - 20, 15);
           ctx.fill();
@@ -366,15 +366,15 @@ export class UIManager {
           ribbonY + ribbonH,
         );
         if (ribbonColor === "pink") {
-          rGrad.addColorStop(0, "#ff66b2");
-          rGrad.addColorStop(1, "#cc0066");
-          ctx.fillStyle = "#800040";
-          ctx.strokeStyle = "#ffe6f2";
+          rGrad.addColorStop(0, "#E1BEE7");
+          rGrad.addColorStop(1, "#AB47BC");
+          ctx.fillStyle = "#7B1FA2";
+          ctx.strokeStyle = "#F3E5F5";
         } else {
           // blue
-          rGrad.addColorStop(0, "#00aaff");
-          rGrad.addColorStop(1, "#0066cc");
-          ctx.fillStyle = "#003366";
+          rGrad.addColorStop(0, "#E1BEE7");
+          rGrad.addColorStop(1, "#AB47BC");
+          ctx.fillStyle = "#7B1FA2";
           ctx.strokeStyle = "#ffffff";
         }
 
@@ -416,8 +416,8 @@ export class UIManager {
     const titleTex = this.createTextureFromCanvas(
       (ctx, w) => {
         const titleGrad = ctx.createLinearGradient(0, 0, 0, 150);
-        titleGrad.addColorStop(0, "#ffea00");
-        titleGrad.addColorStop(1, "#ff8c00");
+        titleGrad.addColorStop(0, "#E1BEE7");
+        titleGrad.addColorStop(1, "#AB47BC");
 
         // Logo Title
         ctx.font = '900 60px "Segoe UI", Arial, sans-serif';
@@ -426,7 +426,7 @@ export class UIManager {
         ctx.lineJoin = "round";
 
         ctx.lineWidth = 14;
-        ctx.strokeStyle = "#5a0000";
+        ctx.strokeStyle = "#7B1FA2";
         ctx.strokeText("HÀNH TRÌNH", w / 2, 50);
 
         ctx.fillStyle = titleGrad;
@@ -435,7 +435,7 @@ export class UIManager {
         // --- Line 2: ZIGZAG ---
         ctx.font = '900 84px "Segoe UI", Arial, sans-serif';
         ctx.lineWidth = 18;
-        ctx.strokeStyle = "#5a0000";
+        ctx.strokeStyle = "#7B1FA2";
         ctx.strokeText("ZIGZAG", w / 2, 135);
 
         ctx.fillStyle = titleGrad;
@@ -455,7 +455,7 @@ export class UIManager {
         ctx.moveTo(w / 2 - 200, 245);
         ctx.lineTo(w / 2 + 200, 245);
         ctx.lineWidth = 4;
-        ctx.strokeStyle = "#ffcc00";
+        ctx.strokeStyle = "#E1BEE7";
         ctx.stroke();
 
         // Highscore
@@ -463,7 +463,7 @@ export class UIManager {
         ctx.lineWidth = 5;
         ctx.strokeStyle = "#000000";
         ctx.strokeText("🏆 KỶ LỤC ĐIỂM: " + highScore, w / 2, 290);
-        ctx.fillStyle = "#ffcc00";
+        ctx.fillStyle = "#E1BEE7";
         ctx.fillText("🏆 KỶ LỤC ĐIỂM: " + highScore, w / 2, 290);
       },
       600,
@@ -702,8 +702,8 @@ export class UIManager {
 
     if (isHigh) {
       const newRecord = document.createElement("div");
-      newRecord.style.background = "#e60000";
-      newRecord.style.border = "2px solid #ffcc00";
+      newRecord.style.background = "#AB47BC";
+      newRecord.style.border = "2px solid #E1BEE7";
       newRecord.style.borderRadius = "8px";
       newRecord.style.color = "#ffffff";
       newRecord.style.fontWeight = "900";
@@ -718,7 +718,7 @@ export class UIManager {
     const scoreVal = document.createElement("div");
     scoreVal.style.fontSize = "26px";
     scoreVal.style.fontWeight = "900";
-    scoreVal.style.color = "#1c053a";
+    scoreVal.style.color = "#4A148C";
     scoreVal.style.margin = "10px 0";
     scoreVal.innerText = `ĐIỂM SỐ: ${score}`;
     card.appendChild(scoreVal);
@@ -726,7 +726,7 @@ export class UIManager {
     const msgVal = document.createElement("div");
     msgVal.style.fontSize = "16px";
     msgVal.style.fontWeight = "800";
-    msgVal.style.color = "#e6004c";
+    msgVal.style.color = "#7B1FA2";
     msgVal.innerText = isHigh
       ? "🏆 KỶ LỤC MỚI! HẠNG #1"
       : "Chúc bạn may mắn lần sau!";
@@ -809,7 +809,7 @@ export class UIManager {
     const question = document.createElement("div");
     question.style.fontSize = "22px";
     question.style.fontWeight = "900";
-    question.style.color = "#1c053a";
+    question.style.color = "#4A148C";
     question.style.margin = "20px 0";
     question.innerText = "Bạn có muốn tiếp tục?";
     card.appendChild(question);
@@ -846,7 +846,7 @@ export class UIManager {
     btnContainer.style.gap = "15px";
 
     const yesBtn = document.createElement("button");
-    yesBtn.style.background = "linear-gradient(to bottom, #7CD41E, #62A816)";
+    yesBtn.style.background = "linear-gradient(to bottom, #E1BEE7, #AB47BC)";
     yesBtn.style.border = "none";
     yesBtn.style.borderRadius = "12px";
     yesBtn.style.padding = "10px 60px";
@@ -858,7 +858,7 @@ export class UIManager {
     yesBtn.style.display = "flex";
     yesBtn.style.alignItems = "center";
     yesBtn.style.justifyContent = "center";
-    yesBtn.style.boxShadow = "0 6px 0 #4C8210, 0 8px 10px rgba(0,0,0,0.3)";
+    yesBtn.style.boxShadow = "0 6px 0 #7B1FA2, 0 8px 10px rgba(0,0,0,0.3)";
     yesBtn.style.transition = "transform 0.1s, box-shadow 0.1s";
 
     // Add video icon
@@ -877,15 +877,15 @@ export class UIManager {
     // Click effect for yesBtn
     yesBtn.addEventListener("mousedown", () => {
       yesBtn.style.transform = "translateY(6px)";
-      yesBtn.style.boxShadow = "0 0px 0 #4C8210, 0 2px 5px rgba(0,0,0,0.3)";
+      yesBtn.style.boxShadow = "0 0px 0 #7B1FA2, 0 2px 5px rgba(0,0,0,0.3)";
     });
     yesBtn.addEventListener("mouseup", () => {
       yesBtn.style.transform = "translateY(0)";
-      yesBtn.style.boxShadow = "0 6px 0 #4C8210, 0 8px 10px rgba(0,0,0,0.3)";
+      yesBtn.style.boxShadow = "0 6px 0 #7B1FA2, 0 8px 10px rgba(0,0,0,0.3)";
     });
     yesBtn.addEventListener("mouseleave", () => {
       yesBtn.style.transform = "translateY(0)";
-      yesBtn.style.boxShadow = "0 6px 0 #4C8210, 0 8px 10px rgba(0,0,0,0.3)";
+      yesBtn.style.boxShadow = "0 6px 0 #7B1FA2, 0 8px 10px rgba(0,0,0,0.3)";
     });
 
     yesBtn.addEventListener("click", () => {
@@ -1201,7 +1201,7 @@ export class UIManager {
         .game-popup-card {
           background: #fffae6;
           border: 5px solid #d32f2f;
-          box-shadow: inset 0 0 0 2.5px #ffea00, 0 6px 0 #8a0000, 0 12px 25px rgba(0, 0, 0, 0.35);
+          box-shadow: inset 0 0 0 2.5px #E1BEE7, 0 6px 0 #8a0000, 0 12px 25px rgba(0, 0, 0, 0.35);
           border-radius: 20px;
           padding: 36px 24px 20px 24px;
           width: 90%; max-width: 380px;
@@ -1252,7 +1252,7 @@ export class UIManager {
           transform: scale(1.1);
         }
         .game-popup-close-btn:active {
-          transform: scale(0.9);
+          transform: scale(0.92);
         }
         .game-settings-row-container {
           margin-top: 18px;
@@ -1354,7 +1354,7 @@ export class UIManager {
           transform: scale(1.1);
         }
         .game-paused-btn:active {
-          transform: scale(0.9);
+          transform: scale(0.92);
         }
 
         /* Achievements popup */
@@ -1462,7 +1462,7 @@ export class UIManager {
         .game-achievements-footer {
           margin-top: 14px;
           background: #fff3cd;
-          border: 2px solid #ffea00;
+          border: 2px solid #E1BEE7;
           border-radius: 12px;
           padding: 10px 14px;
           display: flex;
