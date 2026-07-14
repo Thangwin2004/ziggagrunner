@@ -557,46 +557,70 @@ export class UIManager {
     const rowContainer = document.createElement("div");
     rowContainer.className = "game-settings-row-container";
 
-    // Music row
-    const musicRow = document.createElement("div");
-    musicRow.className = "game-settings-row";
-    const musicLabel = document.createElement("span");
-    musicLabel.className = "game-settings-label";
-    musicLabel.innerText = "🎵 Nhạc nền";
-    musicRow.appendChild(musicLabel);
+    const createToggleRow = (label, isEnabled, onToggle) => {
+      const row = document.createElement("div");
+      row.style.cssText = `width:100%; height:70px; border-radius:12px; background:#fbfaf5; border:3px solid #fff; display:flex; justify-content:space-between; align-items:center; padding:0 20px; box-sizing:border-box; margin-bottom: 15px;`;
+      
+      const text = document.createElement("span");
+      text.style.cssText = `font-family:'Fredoka', 'Baloo 2', 'Be Vietnam Pro', sans-serif; font-size:18px; font-weight:bold; color:#47363B; letter-spacing:0.8px; white-space:nowrap;`;
+      text.innerText = label;
+
+      const dots = document.createElement("div");
+      dots.style.cssText = `flex:1; border-bottom: 4px dotted #c0bba0; margin: 0 15px; position:relative; top:5px;`;
+
+      const toggle = document.createElement("div");
+      const isMuted = !isEnabled;
+      toggle.style.cssText = `width:96px; height:46px; border-radius:23px; background:${isMuted ? '#E8E3D8' : '#81C784'}; border:3px solid #fff; box-shadow: inset 0 3px 6px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.1); cursor:pointer; position:relative; transition: background 0.25s, transform 0.1s; flex-shrink:0; display:flex; align-items:center;`;
+      
+      const statusText = document.createElement("span");
+      statusText.innerText = isMuted ? "OFF" : "ON";
+      statusText.style.cssText = `color:#fff; font-family:'Impact', 'Arial Black', sans-serif; font-size:18px; position:absolute; width:100%; text-align:center; padding-right:${isMuted ? '0' : '32px'}; padding-left:${isMuted ? '32px' : '0'}; box-sizing:border-box; transition: padding 0.25s; text-shadow: 0 2px 3px rgba(0,0,0,0.4); pointer-events:none;`;
+
+      const knob = document.createElement("div");
+      knob.style.cssText = `width:36px; height:36px; border-radius:50%; background:#fff; position:absolute; top:2px; left:${isMuted ? '3px' : '51px'}; transition: left 0.25s cubic-bezier(0.3, 1.2, 0.5, 1); box-shadow: 0 3px 6px rgba(0,0,0,0.4); pointer-events:none;`;
+      
+      toggle.appendChild(statusText);
+      toggle.appendChild(knob);
+
+      toggle.onclick = () => {
+        const newState = onToggle(); // Trả về trạng thái ENABLED sau khi toggle
+        const nowMuted = !newState;
+        toggle.style.background = nowMuted ? '#E8E3D8' : '#81C784';
+        knob.style.left = nowMuted ? '3px' : '51px';
+        statusText.innerText = nowMuted ? "OFF" : "ON";
+        statusText.style.paddingRight = nowMuted ? '0' : '32px';
+        statusText.style.paddingLeft = nowMuted ? '32px' : '0';
+      };
+      
+      toggle.onmousedown = () => toggle.style.transform = "scale(0.92)";
+      toggle.onmouseup = () => toggle.style.transform = "scale(1)";
+      toggle.onmouseleave = () => toggle.style.transform = "scale(1)";
+
+      row.appendChild(text);
+      row.appendChild(dots);
+      row.appendChild(toggle);
+      return row;
+    };
 
     if (this.musicOn === undefined) this.musicOn = true;
-    const musicToggle = document.createElement("button");
-    musicToggle.className = "game-settings-toggle-btn";
-    musicToggle.style.backgroundImage = `url(${this.musicOn ? "/assest/iconbtn/toggle_on.png" : "/assest/iconbtn/toggle_off.png"})`;
-    musicToggle.addEventListener("click", () => {
+    if (this.sfxOn === undefined) this.sfxOn = true;
+
+    // Music row
+    const musicRow = createToggleRow("ÂM NHẠC", this.musicOn, () => {
       this.playClickSound();
       this.musicOn = !this.musicOn;
       if (this.onToggleMusic) this.onToggleMusic(this.musicOn);
-      musicToggle.style.backgroundImage = `url(${this.musicOn ? "/assest/iconbtn/toggle_on.png" : "/assest/iconbtn/toggle_off.png"})`;
+      return this.musicOn;
     });
-    musicRow.appendChild(musicToggle);
     rowContainer.appendChild(musicRow);
 
     // SFX row
-    const sfxRow = document.createElement("div");
-    sfxRow.className = "game-settings-row";
-    const sfxLabel = document.createElement("span");
-    sfxLabel.className = "game-settings-label";
-    sfxLabel.innerText = "🔊 Hiệu ứng";
-    sfxRow.appendChild(sfxLabel);
-
-    if (this.sfxOn === undefined) this.sfxOn = true;
-    const sfxToggle = document.createElement("button");
-    sfxToggle.className = "game-settings-toggle-btn";
-    sfxToggle.style.backgroundImage = `url(${this.sfxOn ? "/assest/iconbtn/toggle_on.png" : "/assest/iconbtn/toggle_off.png"})`;
-    sfxToggle.addEventListener("click", () => {
+    const sfxRow = createToggleRow("HIỆU ỨNG", this.sfxOn, () => {
       this.playClickSound();
       this.sfxOn = !this.sfxOn;
       if (this.onToggleSfx) this.onToggleSfx(this.sfxOn);
-      sfxToggle.style.backgroundImage = `url(${this.sfxOn ? "/assest/iconbtn/toggle_on.png" : "/assest/iconbtn/toggle_off.png"})`;
+      return this.sfxOn;
     });
-    sfxRow.appendChild(sfxToggle);
     rowContainer.appendChild(sfxRow);
 
     card.appendChild(rowContainer);
