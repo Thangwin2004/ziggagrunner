@@ -833,7 +833,7 @@ export class UIManager {
     const question = document.createElement("div");
     question.style.fontSize = "22px";
     question.style.fontWeight = "900";
-    question.style.color = "#4A148C";
+    question.style.color = "#1B5E20";
     question.style.margin = "20px 0";
     question.innerText = "Bạn có muốn tiếp tục?";
     card.appendChild(question);
@@ -870,7 +870,7 @@ export class UIManager {
     btnContainer.style.gap = "15px";
 
     const yesBtn = document.createElement("button");
-    yesBtn.style.background = "linear-gradient(to bottom, #E1BEE7, #AB47BC)";
+    yesBtn.style.background = "linear-gradient(to bottom, #81C784, #4CAF50)";
     yesBtn.style.border = "none";
     yesBtn.style.borderRadius = "12px";
     yesBtn.style.padding = "10px 60px";
@@ -882,7 +882,7 @@ export class UIManager {
     yesBtn.style.display = "flex";
     yesBtn.style.alignItems = "center";
     yesBtn.style.justifyContent = "center";
-    yesBtn.style.boxShadow = "0 6px 0 #7B1FA2, 0 8px 10px rgba(0,0,0,0.3)";
+    yesBtn.style.boxShadow = "0 6px 0 #2E7D32, 0 8px 10px rgba(0,0,0,0.3)";
     yesBtn.style.transition = "transform 0.1s, box-shadow 0.1s";
 
     // Add video icon
@@ -901,15 +901,15 @@ export class UIManager {
     // Click effect for yesBtn
     yesBtn.addEventListener("mousedown", () => {
       yesBtn.style.transform = "translateY(6px)";
-      yesBtn.style.boxShadow = "0 0px 0 #7B1FA2, 0 2px 5px rgba(0,0,0,0.3)";
+      yesBtn.style.boxShadow = "0 0px 0 #2E7D32, 0 2px 5px rgba(0,0,0,0.3)";
     });
     yesBtn.addEventListener("mouseup", () => {
       yesBtn.style.transform = "translateY(0)";
-      yesBtn.style.boxShadow = "0 6px 0 #7B1FA2, 0 8px 10px rgba(0,0,0,0.3)";
+      yesBtn.style.boxShadow = "0 6px 0 #2E7D32, 0 8px 10px rgba(0,0,0,0.3)";
     });
     yesBtn.addEventListener("mouseleave", () => {
       yesBtn.style.transform = "translateY(0)";
-      yesBtn.style.boxShadow = "0 6px 0 #7B1FA2, 0 8px 10px rgba(0,0,0,0.3)";
+      yesBtn.style.boxShadow = "0 6px 0 #2E7D32, 0 8px 10px rgba(0,0,0,0.3)";
     });
 
     yesBtn.addEventListener("click", () => {
@@ -923,7 +923,7 @@ export class UIManager {
     noText.innerText = "Không, cảm ơn";
     noText.style.fontSize = "16px";
     noText.style.fontWeight = "800";
-    noText.style.color = "#888888";
+    noText.style.color = "#2E7D32";
     noText.style.textDecoration = "underline";
     noText.style.cursor = "pointer";
     noText.style.padding = "5px";
