@@ -565,9 +565,6 @@ export class UIManager {
       text.style.cssText = `font-family:'Fredoka', 'Baloo 2', 'Be Vietnam Pro', sans-serif; font-size:18px; font-weight:bold; color:#47363B; letter-spacing:0.8px; white-space:nowrap;`;
       text.innerText = label;
 
-      const dots = document.createElement("div");
-      dots.style.cssText = `flex:1; border-bottom: 4px dotted #c0bba0; margin: 0 15px; position:relative; top:5px;`;
-
       const toggle = document.createElement("div");
       const isMuted = !isEnabled;
       toggle.style.cssText = `width:96px; height:46px; border-radius:23px; background:${isMuted ? "#E8E3D8" : "#81C784"}; border:3px solid #fff; box-shadow: inset 0 3px 6px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.1); cursor:pointer; position:relative; transition: background 0.25s, transform 0.1s; flex-shrink:0; display:flex; align-items:center;`;
@@ -597,7 +594,6 @@ export class UIManager {
       toggle.onmouseleave = () => (toggle.style.transform = "scale(1)");
 
       row.appendChild(text);
-      row.appendChild(dots);
       row.appendChild(toggle);
       return row;
     };
