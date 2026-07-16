@@ -159,7 +159,7 @@ export class UIManager {
     return this.createTextureFromCanvas(
       (ctx, w, h) => {
         // Base shadow color
-        ctx.fillStyle = color === "green" ? "#AB47BC" : "#AB47BC";
+        ctx.fillStyle = color === "green" ? "#2E7D32" : "#1565C0";
         ctx.beginPath();
         ctx.roundRect(0, 10, w, h - 10, h / 2);
         ctx.fill();
@@ -167,11 +167,11 @@ export class UIManager {
         // Gradient Base
         const gradient = ctx.createLinearGradient(0, 0, 0, h - 10);
         if (color === "green") {
-          gradient.addColorStop(0, "#E1BEE7");
-          gradient.addColorStop(1, "#AB47BC");
+          gradient.addColorStop(0, "#81C784");
+          gradient.addColorStop(1, "#4CAF50");
         } else {
-          gradient.addColorStop(0, "#E1BEE7");
-          gradient.addColorStop(1, "#AB47BC");
+          gradient.addColorStop(0, "#64B5F6");
+          gradient.addColorStop(1, "#2196F3");
         }
 
         ctx.fillStyle = gradient;
@@ -323,31 +323,31 @@ export class UIManager {
           ctx.fill();
 
           // Yellow Inner Stroke
-          ctx.strokeStyle = "#E1BEE7";
+          ctx.strokeStyle = "#A5D6A7";
           ctx.lineWidth = 3;
           ctx.beginPath();
           ctx.roundRect(pad + 6, pad + 6, cardW - 12, cardH - 12, 14);
           ctx.stroke();
 
           // Inner Card Face
-          ctx.fillStyle = "#F3E5F5";
+          ctx.fillStyle = "#F1F8E9";
           ctx.beginPath();
           ctx.roundRect(pad + 8, pad + 8, cardW - 16, cardH - 16, 12);
           ctx.fill();
         } else {
           // Dark Purple (Leaderboard style)
-          ctx.fillStyle = "#4A148C";
+          ctx.fillStyle = "#1B5E20";
           ctx.beginPath();
           ctx.roundRect(pad, pad + 8, cardW, cardH, 20);
           ctx.fill();
-          ctx.fillStyle = "#7B1FA2";
+          ctx.fillStyle = "#2E7D32";
           ctx.beginPath();
           ctx.roundRect(pad, pad, cardW, cardH, 20);
           ctx.fill();
-          ctx.strokeStyle = "#E1BEE7";
+          ctx.strokeStyle = "#A5D6A7";
           ctx.lineWidth = 3;
           ctx.stroke();
-          ctx.fillStyle = "#F3E5F5";
+          ctx.fillStyle = "#F1F8E9";
           ctx.beginPath();
           ctx.roundRect(pad + 10, pad + 10, cardW - 20, cardH - 20, 15);
           ctx.fill();
@@ -366,15 +366,15 @@ export class UIManager {
           ribbonY + ribbonH,
         );
         if (ribbonColor === "pink") {
-          rGrad.addColorStop(0, "#E1BEE7");
-          rGrad.addColorStop(1, "#AB47BC");
-          ctx.fillStyle = "#7B1FA2";
-          ctx.strokeStyle = "#F3E5F5";
+          rGrad.addColorStop(0, "#81C784");
+          rGrad.addColorStop(1, "#4CAF50");
+          ctx.fillStyle = "#2E7D32";
+          ctx.strokeStyle = "#F1F8E9";
         } else {
           // blue
-          rGrad.addColorStop(0, "#E1BEE7");
-          rGrad.addColorStop(1, "#AB47BC");
-          ctx.fillStyle = "#7B1FA2";
+          rGrad.addColorStop(0, "#64B5F6");
+          rGrad.addColorStop(1, "#2196F3");
+          ctx.fillStyle = "#1565C0";
           ctx.strokeStyle = "#ffffff";
         }
 
@@ -416,8 +416,8 @@ export class UIManager {
     const titleTex = this.createTextureFromCanvas(
       (ctx, w) => {
         const titleGrad = ctx.createLinearGradient(0, 0, 0, 150);
-        titleGrad.addColorStop(0, "#E1BEE7");
-        titleGrad.addColorStop(1, "#AB47BC");
+        titleGrad.addColorStop(0, "#81C784");
+        titleGrad.addColorStop(1, "#4CAF50");
 
         // Logo Title
         ctx.font = '900 60px "Segoe UI", Arial, sans-serif';
@@ -426,7 +426,7 @@ export class UIManager {
         ctx.lineJoin = "round";
 
         ctx.lineWidth = 14;
-        ctx.strokeStyle = "#7B1FA2";
+        ctx.strokeStyle = "#1B5E20";
         ctx.strokeText("HÀNH TRÌNH", w / 2, 50);
 
         ctx.fillStyle = titleGrad;
@@ -435,7 +435,7 @@ export class UIManager {
         // --- Line 2: ZIGZAG ---
         ctx.font = '900 84px "Segoe UI", Arial, sans-serif';
         ctx.lineWidth = 18;
-        ctx.strokeStyle = "#7B1FA2";
+        ctx.strokeStyle = "#1B5E20";
         ctx.strokeText("ZIGZAG", w / 2, 135);
 
         ctx.fillStyle = titleGrad;
@@ -455,15 +455,15 @@ export class UIManager {
         ctx.moveTo(w / 2 - 200, 245);
         ctx.lineTo(w / 2 + 200, 245);
         ctx.lineWidth = 4;
-        ctx.strokeStyle = "#E1BEE7";
+        ctx.strokeStyle = "#A5D6A7";
         ctx.stroke();
 
         // Highscore
         ctx.font = '900 28px "Segoe UI", Arial, sans-serif';
         ctx.lineWidth = 5;
-        ctx.strokeStyle = "#000000";
+        ctx.strokeStyle = "#1B5E20";
         ctx.strokeText("🏆 KỶ LỤC ĐIỂM: " + highScore, w / 2, 290);
-        ctx.fillStyle = "#E1BEE7";
+        ctx.fillStyle = "#A5D6A7";
         ctx.fillText("🏆 KỶ LỤC ĐIỂM: " + highScore, w / 2, 290);
       },
       600,
@@ -726,8 +726,8 @@ export class UIManager {
 
     if (isHigh) {
       const newRecord = document.createElement("div");
-      newRecord.style.background = "#AB47BC";
-      newRecord.style.border = "2px solid #E1BEE7";
+      newRecord.style.background = "#4CAF50";
+      newRecord.style.border = "2px solid #A5D6A7";
       newRecord.style.borderRadius = "8px";
       newRecord.style.color = "#ffffff";
       newRecord.style.fontWeight = "900";
@@ -742,7 +742,7 @@ export class UIManager {
     const scoreVal = document.createElement("div");
     scoreVal.style.fontSize = "26px";
     scoreVal.style.fontWeight = "900";
-    scoreVal.style.color = "#4A148C";
+    scoreVal.style.color = "#1B5E20";
     scoreVal.style.margin = "10px 0";
     scoreVal.innerText = `ĐIỂM SỐ: ${score}`;
     card.appendChild(scoreVal);
@@ -750,7 +750,7 @@ export class UIManager {
     const msgVal = document.createElement("div");
     msgVal.style.fontSize = "16px";
     msgVal.style.fontWeight = "800";
-    msgVal.style.color = "#7B1FA2";
+    msgVal.style.color = "#2E7D32";
     msgVal.innerText = isHigh
       ? "🏆 KỶ LỤC MỚI! HẠNG #1"
       : "Chúc bạn may mắn lần sau!";
@@ -1224,8 +1224,8 @@ export class UIManager {
         }
         .game-popup-card {
           background: #fffae6;
-          border: 5px solid #d32f2f;
-          box-shadow: inset 0 0 0 2.5px #E1BEE7, 0 6px 0 #8a0000, 0 12px 25px rgba(0, 0, 0, 0.35);
+          border: 5px solid #2E7D32;
+          box-shadow: inset 0 0 0 2.5px #A5D6A7, 0 6px 0 #1B5E20, 0 12px 25px rgba(0, 0, 0, 0.35);
           border-radius: 20px;
           padding: 36px 24px 20px 24px;
           width: 90%; max-width: 380px;
@@ -1245,10 +1245,10 @@ export class UIManager {
           top: -25px;
           left: 50%;
           transform: translateX(-50%);
-          background: linear-gradient(180deg, #ff6b6b 0%, #d32f2f 100%);
-          border: 2.5px solid #fff8b3;
+          background: linear-gradient(180deg, #66BB6A 0%, #388E3C 100%);
+          border: 2.5px solid #E8F5E9;
           border-radius: 12px;
-          box-shadow: 0 4px 0 #8a0000;
+          box-shadow: 0 4px 0 #1B5E20;
           color: #ffffff;
           font-family: 'Be Vietnam Pro', sans-serif;
           font-size: 20px;
@@ -1287,7 +1287,7 @@ export class UIManager {
         }
         .game-settings-row {
           background: #ffffff;
-          border: 3.5px solid #ffccbc;
+          border: 3.5px solid #A5D6A7;
           border-radius: 15px;
           padding: 10px 18px;
           display: flex;
@@ -1300,7 +1300,7 @@ export class UIManager {
           font-family: 'Be Vietnam Pro', sans-serif;
           font-size: 18px;
           font-weight: 700;
-          color: #5c0612;
+          color: #1B5E20;
           display: flex;
           align-items: center;
           gap: 8px;
@@ -1323,9 +1323,9 @@ export class UIManager {
           transform: scale(0.95);
         }
         .game-settings-reset-btn {
-          background: linear-gradient(180deg, #ff6b6b 0%, #d32f2f 100%);
+          background: linear-gradient(180deg, #66BB6A 0%, #388E3C 100%);
           border: none;
-          box-shadow: 0 4px 0 #8a0000;
+          box-shadow: 0 4px 0 #1B5E20;
           border-radius: 12px;
           color: #ffffff;
           font-family: 'Be Vietnam Pro', sans-serif;
@@ -1352,7 +1352,7 @@ export class UIManager {
         }
         .game-settings-reset-btn:active {
           transform: translateY(2px);
-          box-shadow: 0 2px 0 #8a0000;
+          box-shadow: 0 2px 0 #1B5E20;
         }
 
         /* Paused popup */
@@ -1386,12 +1386,12 @@ export class UIManager {
           font-family: 'Be Vietnam Pro', sans-serif;
           font-size: 13px;
           font-weight: 700;
-          color: #5c0612;
+          color: #1B5E20;
           margin: 10px 0;
           text-align: center;
         }
         .game-achievements-user-text.logged-in {
-          color: #d32f2f;
+          color: #388E3C;
         }
         .game-achievements-level-selector {
           display: flex;
@@ -1404,7 +1404,7 @@ export class UIManager {
           background: none;
           border: none;
           font-size: 22px;
-          color: #d32f2f;
+          color: #2E7D32;
           cursor: pointer;
           transition: transform 0.1s ease;
         }
@@ -1415,7 +1415,7 @@ export class UIManager {
           font-family: 'Be Vietnam Pro', sans-serif;
           font-size: 22px;
           font-weight: 800;
-          color: #e53935;
+          color: #2E7D32;
           min-width: 180px;
           text-align: center;
         }
@@ -1432,19 +1432,19 @@ export class UIManager {
           z-index: 10;
           font-size: 12px;
           font-weight: 800;
-          color: #5c0612;
+          color: #1B5E20;
           padding: 8px 4px;
-          border-bottom: 2px solid #ffccbc;
+          border-bottom: 2px solid #C8E6C9;
         }
         .game-achievements-table td {
           font-size: 12px;
           font-weight: 700;
-          color: #5c0612;
+          color: #1B5E20;
           padding: 8px 4px;
           text-align: center;
         }
         .game-achievements-table tr.highlighted td {
-          color: #d32f2f;
+          color: #2E7D32;
           font-weight: 900;
         }
         .game-achievements-table tr.rank-0 td {
@@ -1460,7 +1460,7 @@ export class UIManager {
           font-weight: 900;
         }
         .game-achievements-table tbody tr {
-          border-bottom: 1px solid #ffebe6;
+          border-bottom: 1px solid #E8F5E9;
         }
         .game-achievements-table tbody tr:last-child {
           border-bottom: none;
@@ -1485,8 +1485,8 @@ export class UIManager {
         /* Footer personal best */
         .game-achievements-footer {
           margin-top: 14px;
-          background: #fff3cd;
-          border: 2px solid #E1BEE7;
+          background: #E8F5E9;
+          border: 2px solid #A5D6A7;
           border-radius: 12px;
           padding: 10px 14px;
           display: flex;
