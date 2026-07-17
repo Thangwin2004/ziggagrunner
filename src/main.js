@@ -3,7 +3,9 @@ import { GameManager } from "./core/GameManager.js";
 
 // 1. Setup Three.js Scene, Camera, Renderer
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x87ceeb); // Happy Sky Blue
+const bgTexture = new THREE.TextureLoader().load("/assest/image/bg.png");
+bgTexture.colorSpace = THREE.SRGBColorSpace;
+scene.background = bgTexture;
 
 const container = document.getElementById("pixi-container") || document.body;
 const w = container.clientWidth || window.innerWidth;
