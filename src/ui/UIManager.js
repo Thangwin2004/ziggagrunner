@@ -517,8 +517,8 @@ export class UIManager {
     const titleTex = this.createTextureFromCanvas(
       (ctx, w) => {
         const titleGrad = ctx.createLinearGradient(0, 0, 0, 150);
-        titleGrad.addColorStop(0, "#81C784");
-        titleGrad.addColorStop(1, "#4CAF50");
+        titleGrad.addColorStop(0, "#FFF176");
+        titleGrad.addColorStop(1, "#FBC02D");
 
         // Logo Title
         ctx.font = '900 60px "Segoe UI", Arial, sans-serif';
@@ -527,7 +527,7 @@ export class UIManager {
         ctx.lineJoin = "round";
 
         ctx.lineWidth = 14;
-        ctx.strokeStyle = "#1B5E20";
+        ctx.strokeStyle = "#F57F17";
         ctx.strokeText("HÀNH TRÌNH", w / 2, 50);
 
         ctx.fillStyle = titleGrad;
@@ -536,7 +536,7 @@ export class UIManager {
         // --- Line 2: ZIGZAG ---
         ctx.font = '900 84px "Segoe UI", Arial, sans-serif';
         ctx.lineWidth = 18;
-        ctx.strokeStyle = "#1B5E20";
+        ctx.strokeStyle = "#F57F17";
         ctx.strokeText("ZIGZAG", w / 2, 135);
 
         ctx.fillStyle = titleGrad;
@@ -556,15 +556,15 @@ export class UIManager {
         ctx.moveTo(w / 2 - 200, 245);
         ctx.lineTo(w / 2 + 200, 245);
         ctx.lineWidth = 4;
-        ctx.strokeStyle = "#A5D6A7";
+        ctx.strokeStyle = "#FBC02D";
         ctx.stroke();
 
         // Highscore
         ctx.font = '900 28px "Segoe UI", Arial, sans-serif';
         ctx.lineWidth = 5;
-        ctx.strokeStyle = "#1B5E20";
+        ctx.strokeStyle = "#F57F17";
         ctx.strokeText("🏆 KỶ LỤC ĐIỂM: " + highScore, w / 2, 290);
-        ctx.fillStyle = "#A5D6A7";
+        ctx.fillStyle = "#FFF176";
         ctx.fillText("🏆 KỶ LỤC ĐIỂM: " + highScore, w / 2, 290);
       },
       600,
