@@ -169,43 +169,41 @@ export class UIManager {
 
   // --- Buttons ---
 
-  createWideButtonTexture(text, width = 240, height = 72, color = "purple") {
-    return this.createTextureFromCanvas(
-      (ctx, w, h) => {
+  createWideButtonTexture(text, width = 240, height = 72, color = "yellow") {
+    const radius = height / 2;
+    const strokeWidth = Math.max(3, radius * 0.15);
+    const padX = strokeWidth + 2;
+    const padY = strokeWidth + 2;
+
+    const canvasW = width + padX * 2;
+    const canvasH = height + height * 0.15 + padY * 2;
+
+    const texture = this.createTextureFromCanvas(
+      (ctx) => {
         let colorTop, colorBot, colorShadow;
         if (color === "green") {
-          colorTop = "#66BB6A";
-          colorBot = "#43A047";
-          colorShadow = 0x2e7d32;
+          colorTop = "#66BB6A"; colorBot = "#43A047"; colorShadow = "#2e7d32";
         } else if (color === "orange") {
-          colorTop = "#FFB74D";
-          colorBot = "#F57C00";
-          colorShadow = 0xe65100;
+          colorTop = "#FF7043"; colorBot = "#F4511E"; colorShadow = "#D84315";
         } else if (color === "blue") {
-          colorTop = "#29B6F6";
-          colorBot = "#0288D1";
-          colorShadow = 0x01579b;
-        } else if (color === "purple") {
-          colorTop = "#AB47BC";
-          colorBot = "#7B1FA2";
-          colorShadow = 0x4a148c;
-        } else {
-          // yellow
-          colorTop = "#FFCA28";
-          colorBot = "#FF8F00";
-          colorShadow = 0xff6f00;
+          colorTop = "#4FC3F7"; colorBot = "#039BE5"; colorShadow = "#0277BD";
+        } else if (color === "red") {
+          colorTop = "#E53935"; colorBot = "#E53935"; colorShadow = "#C62828";
+        } else { // yellow
+          colorTop = "#FFF176"; colorBot = "#FBC02D"; colorShadow = "#F57F17";
         }
 
-        const shadowHex = "#" + colorShadow.toString(16).padStart(6, "0");
+        ctx.translate(padX, padY);
+        const w = width;
+        const h = height;
 
-        // 1. Solid Shadow (Offset down)
-        const radius = h / 2;
-        ctx.fillStyle = shadowHex;
+        // 1. Solid Shadow
+        ctx.fillStyle = colorShadow;
         ctx.beginPath();
         ctx.roundRect(0, h * 0.15, w, h, radius);
         ctx.fill();
 
-        // 2. Main Face Background (Flat with thick border)
+        // 2. Main Face Background
         const gradient = ctx.createLinearGradient(0, 0, 0, h);
         gradient.addColorStop(0, colorTop);
         gradient.addColorStop(1, colorBot);
@@ -216,39 +214,35 @@ export class UIManager {
         ctx.fill();
 
         ctx.strokeStyle = "#ffffff";
-        ctx.lineWidth = Math.max(4, radius * 0.15);
+        ctx.lineWidth = strokeWidth;
         ctx.stroke();
 
         // Text with Stroke
-        ctx.font =
-          "900 " +
-          Math.max(16, radius * 0.9) +
-          'px "Fredoka", "Baloo 2", "Be Vietnam Pro", sans-serif';
+        ctx.font = '900 ' + Math.max(16, radius * 0.9) + 'px "Fredoka", "Baloo 2", "Be Vietnam Pro", sans-serif';
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
 
         ctx.lineWidth = 5;
-        ctx.strokeStyle = shadowHex;
+        ctx.strokeStyle = colorShadow;
         ctx.lineJoin = "round";
         ctx.strokeText(text, w / 2, h / 2);
 
         ctx.fillStyle = "#ffffff";
         ctx.fillText(text, w / 2, h / 2);
       },
-      width,
-      height + height * 0.15 + 4,
+      canvasW,
+      canvasH
     );
+    return { texture, canvasW, canvasH };
   }
-
-  createWideButton(text, onClick, color = "purple") {
+  createWideButton(text, onClick, color = "yellow") {
     const w = 240;
     const h = 72;
-    const texture = this.createWideButtonTexture(text, w, h, color);
+    const { texture, canvasW, canvasH } = this.createWideButtonTexture(text, w, h, color);
     const material = new THREE.SpriteMaterial({ map: texture });
     const sprite = new THREE.Sprite(material);
 
-    const texH = h + h * 0.15 + 4;
-    sprite.scale.set(w, texH, 1);
+    sprite.scale.set(canvasW, canvasH, 1);
     sprite.onClick = onClick;
 
     sprite.onHoverEnter = () => {};
@@ -257,7 +251,6 @@ export class UIManager {
     this.interactiveObjects.push(sprite);
     return sprite;
   }
-
   createIconButton(iconName, onClick, scale = 60, theme = "blue") {
     const w = scale * 1.2;
     const h = scale * 1.2;
@@ -601,9 +594,9 @@ export class UIManager {
       () => {
         if (this.onPlay) this.onPlay();
       },
-      "purple",
+      "yellow",
     );
-    playBtn.position.set(0, -60, 0);
+    playBtn.position.set(0, -40, 0);
     this.activeGroup.add(playBtn);
 
     const trophyBtn = this.createIconButton(
@@ -612,9 +605,9 @@ export class UIManager {
         if (this.onAchievements) this.onAchievements();
       },
       70,
-      "purple",
+      "yellow",
     );
-    trophyBtn.position.set(-60, -160, 0);
+    trophyBtn.position.set(-80, -150, 0);
     this.activeGroup.add(trophyBtn);
 
     const settingsBtn = this.createIconButton(
@@ -623,9 +616,9 @@ export class UIManager {
         if (this.onSettings) this.onSettings();
       },
       70,
-      "purple",
+      "yellow",
     );
-    settingsBtn.position.set(60, -160, 0);
+    settingsBtn.position.set(80, -150, 0);
     this.activeGroup.add(settingsBtn);
   }
 
@@ -1075,7 +1068,7 @@ export class UIManager {
         if (this.onSettings) this.onSettings();
       },
       50,
-      "purple",
+      "yellow",
     );
     settingsBtn.position.set(
       window.innerWidth / 2 - 50,
