@@ -586,7 +586,7 @@ export class UIManager {
     }
 
     titleSprite.scale.set(scaleW, scaleH, 1);
-    titleSprite.position.set(0, 130, 0);
+    titleSprite.position.set(0, 160, 0);
     this.activeGroup.add(titleSprite);
 
     const playBtn = this.createWideButton(
@@ -596,7 +596,7 @@ export class UIManager {
       },
       "yellow",
     );
-    playBtn.position.set(0, -40, 0);
+    playBtn.position.set(0, -60, 0);
     this.activeGroup.add(playBtn);
 
     const trophyBtn = this.createIconButton(
@@ -607,7 +607,7 @@ export class UIManager {
       70,
       "yellow",
     );
-    trophyBtn.position.set(-80, -150, 0);
+    trophyBtn.position.set(-80, -180, 0);
     this.activeGroup.add(trophyBtn);
 
     const settingsBtn = this.createIconButton(
@@ -618,7 +618,7 @@ export class UIManager {
       70,
       "yellow",
     );
-    settingsBtn.position.set(80, -150, 0);
+    settingsBtn.position.set(80, -180, 0);
     this.activeGroup.add(settingsBtn);
   }
 
