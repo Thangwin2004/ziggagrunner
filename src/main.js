@@ -55,14 +55,11 @@ const uiCamera = new THREE.OrthographicCamera(
 );
 uiCamera.position.z = 5;
 
-// 4. Init Game Manager (pass uiScene and uiCamera)
-const game = new GameManager(
-  scene,
-  camera,
-  uiScene,
-  uiCamera,
-  renderer.domElement,
-);
+// 4. Wait for fonts before init Game Manager
+let game;
+document.fonts.ready.then(() => {
+  game = new GameManager(scene, camera, uiScene, uiCamera, renderer.domElement);
+});
 
 // 5. Handle Resizing
 const handleResize = () => {
@@ -78,7 +75,7 @@ const handleResize = () => {
   uiCamera.updateProjectionMatrix();
 
   renderer.setSize(newW, newH);
-  if (typeof game !== "undefined") {
+  if (game) {
     game.resize();
   }
 };
@@ -92,7 +89,7 @@ function animate() {
   requestAnimationFrame(animate);
 
   const deltaTime = clock.getDelta();
-  game.update(deltaTime);
+  if (game) game.update(deltaTime);
 
   // Make sure light follows camera somewhat so shadows don't clip
   dirLight.position.x = camera.position.x + 10;
