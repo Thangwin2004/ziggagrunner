@@ -670,7 +670,7 @@ export class UIManager {
 
       const toggle = document.createElement("div");
       const isMuted = !isEnabled;
-      toggle.style.cssText = `width:96px; height:46px; border-radius:23px; background:${isMuted ? "#E8E3D8" : "#81C784"}; border:3px solid #fff; box-shadow: inset 0 3px 6px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.1); cursor:pointer; position:relative; transition: background 0.25s, transform 0.1s; flex-shrink:0; display:flex; align-items:center;`;
+      toggle.style.cssText = `width:96px; height:46px; border-radius:23px; background:${isMuted ? "#E8E3D8" : "#FBC02D"}; border:3px solid #fff; box-shadow: inset 0 3px 6px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.1); cursor:pointer; position:relative; transition: background 0.25s, transform 0.1s; flex-shrink:0; display:flex; align-items:center;`;
 
       const statusText = document.createElement("span");
       statusText.innerText = isMuted ? "OFF" : "ON";
@@ -953,11 +953,11 @@ export class UIManager {
     btnContainer.style.gap = "15px";
 
     const yesBtn = document.createElement("button");
-    yesBtn.style.background = "linear-gradient(to bottom, #81C784, #4CAF50)";
+    yesBtn.style.background = "linear-gradient(to bottom, #FFF176, #FBC02D)";
     yesBtn.style.border = "none";
     yesBtn.style.borderRadius = "12px";
     yesBtn.style.padding = "10px 60px";
-    yesBtn.style.color = "white";
+    yesBtn.style.color = "#47363B";
     yesBtn.style.fontSize = "26px";
     yesBtn.style.fontWeight = "900";
     yesBtn.style.fontFamily = '"Segoe UI", Arial, sans-serif';
@@ -965,7 +965,7 @@ export class UIManager {
     yesBtn.style.display = "flex";
     yesBtn.style.alignItems = "center";
     yesBtn.style.justifyContent = "center";
-    yesBtn.style.boxShadow = "0 6px 0 #2E7D32, 0 8px 10px rgba(0,0,0,0.3)";
+    yesBtn.style.boxShadow = "0 6px 0 #F57F17, 0 8px 10px rgba(0,0,0,0.3)";
     yesBtn.style.transition = "transform 0.1s, box-shadow 0.1s";
 
     // Add video icon
@@ -984,15 +984,15 @@ export class UIManager {
     // Click effect for yesBtn
     yesBtn.addEventListener("mousedown", () => {
       yesBtn.style.transform = "translateY(6px)";
-      yesBtn.style.boxShadow = "0 0px 0 #2E7D32, 0 2px 5px rgba(0,0,0,0.3)";
+      yesBtn.style.boxShadow = "0 0px 0 #F57F17, 0 2px 5px rgba(0,0,0,0.3)";
     });
     yesBtn.addEventListener("mouseup", () => {
       yesBtn.style.transform = "translateY(0)";
-      yesBtn.style.boxShadow = "0 6px 0 #2E7D32, 0 8px 10px rgba(0,0,0,0.3)";
+      yesBtn.style.boxShadow = "0 6px 0 #F57F17, 0 8px 10px rgba(0,0,0,0.3)";
     });
     yesBtn.addEventListener("mouseleave", () => {
       yesBtn.style.transform = "translateY(0)";
-      yesBtn.style.boxShadow = "0 6px 0 #2E7D32, 0 8px 10px rgba(0,0,0,0.3)";
+      yesBtn.style.boxShadow = "0 6px 0 #F57F17, 0 8px 10px rgba(0,0,0,0.3)";
     });
 
     yesBtn.addEventListener("click", () => {
@@ -1329,11 +1329,11 @@ export class UIManager {
           top: -25px;
           left: 50%;
           transform: translateX(-50%);
-          background: linear-gradient(180deg, #66BB6A 0%, #388E3C 100%);
-          border: 2.5px solid #E8F5E9;
+          background: linear-gradient(180deg, #FFF176 0%, #FBC02D 100%);
+          border: 2.5px solid #FFF9C4;
           border-radius: 12px;
-          box-shadow: 0 4px 0 #1B5E20;
-          color: #ffffff;
+          box-shadow: 0 4px 0 #F57F17;
+          color: #47363B;
           font-family: 'Be Vietnam Pro', sans-serif;
           font-size: 20px;
           font-weight: 800;
@@ -1407,11 +1407,11 @@ export class UIManager {
           transform: scale(0.95);
         }
         .game-settings-reset-btn {
-          background: linear-gradient(180deg, #66BB6A 0%, #388E3C 100%);
+          background: linear-gradient(180deg, #FFF176 0%, #FBC02D 100%);
           border: none;
-          box-shadow: 0 4px 0 #1B5E20;
+          box-shadow: 0 4px 0 #F57F17;
           border-radius: 12px;
-          color: #ffffff;
+          color: #47363B;
           font-family: 'Be Vietnam Pro', sans-serif;
           font-size: 14px;
           font-weight: 800;
@@ -1436,7 +1436,7 @@ export class UIManager {
         }
         .game-settings-reset-btn:active {
           transform: translateY(2px);
-          box-shadow: 0 2px 0 #1B5E20;
+          box-shadow: 0 2px 0 #F57F17;
         }
 
         /* Paused popup */
@@ -1444,12 +1444,12 @@ export class UIManager {
           display: flex;
           justify-content: center;
           align-items: center;
-          gap: 20px;
-          margin-top: 24px;
+          gap: 35px;
+          margin-top: 30px;
         }
         .game-paused-btn {
-          width: 52px;
-          height: 52px;
+          width: 64px;
+          height: 64px;
           border: none;
           background-size: contain;
           background-repeat: no-repeat;
@@ -1457,6 +1457,7 @@ export class UIManager {
           background-color: transparent;
           cursor: pointer;
           transition: transform 0.15s ease, filter 0.15s ease;
+          filter: sepia(1) saturate(5) hue-rotate(5deg) brightness(1.2);
         }
         .game-paused-btn:hover {
           transform: scale(1.1);
