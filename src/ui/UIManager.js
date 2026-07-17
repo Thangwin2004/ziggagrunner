@@ -670,7 +670,7 @@ export class UIManager {
 
       const toggle = document.createElement("div");
       const isMuted = !isEnabled;
-      toggle.style.cssText = `width:96px; height:46px; border-radius:23px; background:${isMuted ? "#E8E3D8" : "#FBC02D"}; border:3px solid #fff; box-shadow: inset 0 3px 6px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.1); cursor:pointer; position:relative; transition: background 0.25s, transform 0.1s; flex-shrink:0; display:flex; align-items:center;`;
+      toggle.style.cssText = `width:96px; height:46px; border-radius:23px; background:${isMuted ? "#E8E3D8" : "#81C784"}; border:3px solid #fff; box-shadow: inset 0 3px 6px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.1); cursor:pointer; position:relative; transition: background 0.25s, transform 0.1s; flex-shrink:0; display:flex; align-items:center;`;
 
       const statusText = document.createElement("span");
       statusText.innerText = isMuted ? "OFF" : "ON";
@@ -809,8 +809,8 @@ export class UIManager {
 
     if (isHigh) {
       const newRecord = document.createElement("div");
-      newRecord.style.background = "#4CAF50";
-      newRecord.style.border = "2px solid #A5D6A7";
+      newRecord.style.background = "#FBC02D";
+      newRecord.style.border = "2px solid #FFF59D";
       newRecord.style.borderRadius = "8px";
       newRecord.style.color = "#ffffff";
       newRecord.style.fontWeight = "900";
@@ -825,7 +825,7 @@ export class UIManager {
     const scoreVal = document.createElement("div");
     scoreVal.style.fontSize = "26px";
     scoreVal.style.fontWeight = "900";
-    scoreVal.style.color = "#1B5E20";
+    scoreVal.style.color = "#47363B";
     scoreVal.style.margin = "10px 0";
     scoreVal.innerText = `ĐIỂM SỐ: ${score}`;
     card.appendChild(scoreVal);
@@ -833,7 +833,7 @@ export class UIManager {
     const msgVal = document.createElement("div");
     msgVal.style.fontSize = "16px";
     msgVal.style.fontWeight = "800";
-    msgVal.style.color = "#2E7D32";
+    msgVal.style.color = "#47363B";
     msgVal.innerText = isHigh
       ? "🏆 KỶ LỤC MỚI! HẠNG #1"
       : "Chúc bạn may mắn lần sau!";
@@ -916,7 +916,7 @@ export class UIManager {
     const question = document.createElement("div");
     question.style.fontSize = "22px";
     question.style.fontWeight = "900";
-    question.style.color = "#1B5E20";
+    question.style.color = "#47363B";
     question.style.margin = "20px 0";
     question.innerText = "Bạn có muốn tiếp tục?";
     card.appendChild(question);
@@ -1006,7 +1006,7 @@ export class UIManager {
     noText.innerText = "Không, cảm ơn";
     noText.style.fontSize = "16px";
     noText.style.fontWeight = "800";
-    noText.style.color = "#2E7D32";
+    noText.style.color = "#47363B";
     noText.style.textDecoration = "underline";
     noText.style.cursor = "pointer";
     noText.style.padding = "5px";
@@ -1308,8 +1308,8 @@ export class UIManager {
         }
         .game-popup-card {
           background: #fffae6;
-          border: 5px solid #2E7D32;
-          box-shadow: inset 0 0 0 2.5px #A5D6A7, 0 6px 0 #1B5E20, 0 12px 25px rgba(0, 0, 0, 0.35);
+          border: 5px solid #FBC02D;
+          box-shadow: inset 0 0 0 2.5px #FFF59D, 0 6px 0 #F57F17, 0 12px 25px rgba(0, 0, 0, 0.35);
           border-radius: 20px;
           padding: 36px 24px 20px 24px;
           width: 90%; max-width: 380px;
@@ -1371,7 +1371,7 @@ export class UIManager {
         }
         .game-settings-row {
           background: #ffffff;
-          border: 3.5px solid #A5D6A7;
+          border: 3.5px solid #FFF9C4;
           border-radius: 15px;
           padding: 10px 18px;
           display: flex;
@@ -1384,7 +1384,7 @@ export class UIManager {
           font-family: 'Be Vietnam Pro', sans-serif;
           font-size: 18px;
           font-weight: 700;
-          color: #1B5E20;
+          color: #47363B;
           display: flex;
           align-items: center;
           gap: 8px;
