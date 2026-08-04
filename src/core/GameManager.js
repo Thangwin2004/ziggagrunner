@@ -6,6 +6,7 @@ import { InputManager } from "./InputManager.js";
 import { getStats, saveStats } from "./Storage.js";
 import { AudioManager } from "./AudioManager.js";
 import { AdManager } from "./AdManager.js";
+import { winkGame } from "../integrations/wink/wink-adapter.js";
 import gsap from "gsap";
 
 export class GameManager {
@@ -218,6 +219,9 @@ export class GameManager {
     this.hasRevivedThisRun = false;
     this.hasDoubledThisRun = false;
 
+    // ── Wink: start a new round ──
+    this._winkRound = winkGame.startRound();
+
     this.levelBuilder.clear();
     this.worldData = this.levelBuilder.buildLevel(0);
 
@@ -273,6 +277,27 @@ export class GameManager {
                 if (this.ui.onRevive) this.ui.onRevive();
               },
               () => {
+                // ── Wink: complete round + submit score ──
+                if (this._winkRound) {
+                  winkGame.completeRound(this._winkRound, {
+                    metadata: {
+                      outcome: "game_over",
+                      score: Math.floor(this.score),
+                    },
+                  });
+                  if (winkGame.canSubmitScore) {
+                    winkGame
+                      .submitFinalScore({
+                        score: Math.floor(this.score),
+                        playTime: Math.round(
+                          (Date.now() - this._winkRound.startedAtMs) / 1000,
+                        ),
+                        gameMode: "classic",
+                      })
+                      .catch(() => {});
+                  }
+                }
+
                 // ON REVIVE SKIP
                 this.ui.showGameOver(
                   this.score,
@@ -282,6 +307,27 @@ export class GameManager {
               },
             );
           } else {
+            // ── Wink: complete round + submit score ──
+            if (this._winkRound) {
+              winkGame.completeRound(this._winkRound, {
+                metadata: {
+                  outcome: "game_over",
+                  score: Math.floor(this.score),
+                },
+              });
+              if (winkGame.canSubmitScore) {
+                winkGame
+                  .submitFinalScore({
+                    score: Math.floor(this.score),
+                    playTime: Math.round(
+                      (Date.now() - this._winkRound.startedAtMs) / 1000,
+                    ),
+                    gameMode: "classic",
+                  })
+                  .catch(() => {});
+              }
+            }
+
             // Already revived once, go straight to game over
             this.ui.showGameOver(
               this.score,

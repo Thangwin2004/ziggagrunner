@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { GameManager } from "./core/GameManager.js";
+import { winkGame } from "./integrations/wink/wink-adapter.js";
 
 // 1. Setup Three.js Scene, Camera, Renderer
 const scene = new THREE.Scene();
@@ -61,6 +62,41 @@ uiCamera.position.z = 5;
 let game;
 document.fonts.ready.then(() => {
   game = new GameManager(scene, camera, uiScene, uiCamera, renderer.domElement);
+
+  // ── Wink Bridge lifecycle binding ──
+  winkGame.bindLifecycle({
+    onPause: () => {
+      // The game loop uses THREE.Clock, so we pause updating if needed
+      // but GameManager has its own pause state. We can force it to PAUSED
+      if (game && game.state === "PLAYING") {
+        game.state = "PAUSED";
+        game.audio.stopRun();
+        game.ui.showSettings(true);
+      }
+    },
+    onResume: () => {
+      // The UI will handle resuming, but if we need to force it:
+      if (game && game.state === "PAUSED") {
+        game.state = "PLAYING";
+        game.audio.playRun();
+        game.ui.clear();
+        game.ui.showHUD();
+        game.ui.updateHUD(game.score, game.coinsThisRun);
+      }
+    },
+    onMute: () => {
+      if (game) game.audio.setBGMEnabled(false);
+      game?.audio.setSFXEnabled(false);
+    },
+    onUnmute: () => {
+      if (game) game.audio.setBGMEnabled(true);
+      game?.audio.setSFXEnabled(true);
+    },
+  });
+
+  winkGame.observe((state) => {
+    console.log("[WinkBridge] phase:", state.phase);
+  });
 });
 
 // 5. Handle Resizing
