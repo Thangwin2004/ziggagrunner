@@ -5,9 +5,15 @@
   "type": "module",
   "scripts": {
     "start": "pnpm run dev",
+    "prebuild": "pnpm run verify:wink-bridge",
     "build": "pnpm run lint && vite build",
     "lint": "eslint .",
-    "dev": "vite"
+    "dev": "vite",
+    "verify:wink-bridge": "node scripts/verify-wink-bridge.mjs"
+  },
+  "packageManager": "pnpm@10.28.2",
+  "engines": {
+    "node": ">=22.13.0"
   },
   "dependencies": {
     "fflate": "^0.8.3",
