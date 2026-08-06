@@ -4,7 +4,7 @@
   "environment": "prod",
   "domain": "bo-lac-zig-zag.papastudio.net",
   "protocolVersion": 1,
-  "bridgeVersion": "9.0.0",
+  "bridgeVersion": "9.0.1",
   "allowedParentOrigins": [
     "https://winkgames.papastudio.net"
   ]
