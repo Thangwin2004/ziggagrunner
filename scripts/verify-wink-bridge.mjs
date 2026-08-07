@@ -9,6 +9,10 @@ const runtime = await readJson("public/wink-runtime-config.json");
 const lock = await readJson("public/wink-bridge.lock.json");
 const bridge = await readFile("public/wink-bridge.js");
 const sha256 = createHash("sha256").update(bridge).digest("hex");
+const expectedParents = [
+  "https://winkgames.papastudio.net",
+  "http://localhost:3000",
+];
 
 const expectedRuntime = {
   gameId: config.gameId,
@@ -24,8 +28,8 @@ if (JSON.stringify(runtime) !== JSON.stringify(expectedRuntime)) {
 if (
   config.environment !== "prod" ||
   config.domain !== `${config.slug}.papastudio.net` ||
-  config.allowedParentOrigins.length !== 1 ||
-  config.allowedParentOrigins[0] !== "https://winkgames.papastudio.net"
+  JSON.stringify(config.allowedParentOrigins) !==
+    JSON.stringify(expectedParents)
 ) {
   throw new Error("WINK_PRODUCTION_CONFIG_INVALID");
 }
