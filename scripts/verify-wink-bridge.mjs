@@ -1,5 +1,6 @@
 /* global console */
 
+import { Buffer } from "node:buffer";
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 
@@ -7,7 +8,11 @@ const readJson = async (path) => JSON.parse(await readFile(path, "utf8"));
 const config = await readJson("game.config.json");
 const runtime = await readJson("public/wink-runtime-config.json");
 const lock = await readJson("public/wink-bridge.lock.json");
-const bridge = await readFile("public/wink-bridge.js");
+const rawBridge = await readFile("public/wink-bridge.js");
+const bridge = Buffer.from(
+  rawBridge.toString("utf8").replace(/\r\n/g, "\n"),
+  "utf8",
+);
 const sha256 = createHash("sha256").update(bridge).digest("hex");
 const expectedParents = [
   "https://winkgames.papastudio.net",

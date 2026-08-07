@@ -1,5 +1,26 @@
 import * as THREE from "three";
 import gsap from "gsap";
+import { winkGame } from "../integrations/wink/wink-adapter.js";
+
+function getEffectiveUser() {
+  try {
+    const savedUser = window.localStorage.getItem("google_user");
+    if (savedUser) {
+      const parsed = JSON.parse(savedUser);
+      if (parsed && parsed.name) return parsed;
+    }
+  } catch (err) {
+    console.warn(err);
+  }
+
+  if (winkGame && winkGame.isAuthenticated) {
+    return {
+      name: "Thành viên",
+      avatar: "/assest/image/imagenobackgrd/001_avatar_laclac.png",
+    };
+  }
+  return null;
+}
 
 export class UIManager {
   constructor(uiScene, uiCamera, domElement) {
@@ -1306,18 +1327,22 @@ export class UIManager {
     });
     card.appendChild(closeBtn);
 
+    const effUser = getEffectiveUser();
     const userText = document.createElement("div");
     userText.className = "game-achievements-user-text";
-    userText.innerText = "Tài khoản: Khách (Điểm lưu thiết bị)";
+    userText.innerText = effUser
+      ? `Tài khoản: ${effUser.name} (Đã đăng nhập)`
+      : "Tài khoản: Khách (Điểm lưu thiết bị)";
     card.appendChild(userText);
 
     const personalScore = stats?.highScore || 0;
+    const playerName = effUser ? effUser.name : "Bạn (Khách)";
 
     const rankings =
       personalScore > 0
         ? [
             {
-              name: "Bạn (Khách)",
+              name: playerName,
               score: personalScore,
               isPlayer: true,
             },
@@ -1376,7 +1401,7 @@ export class UIManager {
     const rankItem = document.createElement("div");
     rankItem.className = "game-achievements-footer-item";
     rankItem.style.width = "50%";
-    rankItem.innerText = "PB: Bạn (Khách)";
+    rankItem.innerText = `PB: ${playerName}`;
     footer.appendChild(rankItem);
 
     const scoreItem = document.createElement("div");

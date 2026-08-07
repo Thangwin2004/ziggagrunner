@@ -75,7 +75,7 @@ export class WinkGameIntegration {
         ...rest,
       });
     } catch (err) {
-      console.warn('[Wink] complete() failed:', err.message);
+      console.warn("[Wink] complete() failed:", err.message);
     }
     return true;
   }
