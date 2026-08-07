@@ -1313,27 +1313,16 @@ export class UIManager {
 
     const personalScore = stats?.highScore || 0;
 
-    let rankings = [
-      { name: "Lạc Lạc", score: 9999 },
-      { name: "Bé Lạc", score: 8500 },
-      { name: "Trưởng Bản", score: 7200 },
-      { name: "Người Lạ", score: 5000 },
-      { name: "Dân Làng", score: 3000 },
-      { name: "Khách", score: 1500 },
-      { name: "Gà Con", score: 100 },
-    ];
-
-    if (personalScore > 0) {
-      rankings = rankings.filter((r) => r.name !== "Khách");
-      rankings.push({
-        name: "Bạn (Khách)",
-        score: personalScore,
-        isPlayer: true,
-      });
-    }
-
-    rankings.sort((a, b) => b.score - a.score);
-    rankings = rankings.slice(0, 7);
+    const rankings =
+      personalScore > 0
+        ? [
+            {
+              name: "Bạn (Khách)",
+              score: personalScore,
+              isPlayer: true,
+            },
+          ]
+        : [];
 
     rankings.forEach((r, i) => {
       if (i === 0) r.medal = "🥇";
@@ -1359,6 +1348,12 @@ export class UIManager {
     table.appendChild(thead);
 
     const tbody = document.createElement("tbody");
+    if (rankings.length === 0) {
+      const emptyRow = document.createElement("tr");
+      emptyRow.innerHTML =
+        '<td colspan="3" style="padding:24px;text-align:center;">Chưa có thành tích. Hãy chơi để thiết lập kỷ lục đầu tiên.</td>';
+      tbody.appendChild(emptyRow);
+    }
     rankings.forEach((r, i) => {
       const row = document.createElement("tr");
       if (i < 3) row.className = `rank-${i}`;
