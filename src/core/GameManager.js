@@ -387,30 +387,16 @@ export class GameManager {
 
       this.camera.lookAt(this.player.x, 0, this.player.z);
     } else if (this.state === "GAME_OVER") {
-      // Allow player to visually fall off the screen in a slow cartoonish way
-      if (this.player.isDead && this.player.y > -30) {
-        this.player.vy -= 0.015; // Slow Gravity
-        this.player.y += this.player.vy;
-        this.player.x += this.player.vx;
-        this.player.z += this.player.vz;
-        this.player.updateBounds();
+      // Keep the defeat shot above the road instead of following the player
+      // beneath the grass plane.
+      const targetX = this.player.x - 20;
+      const targetY = 30;
+      const targetZ = this.player.z - 20;
 
-        // Cinematic camera following the falling character
-        const targetX = this.player.x - 20;
-        const targetY = Math.max(this.player.y + 20, 0); // Don't let camera go below 0 initially, but follow down
-        const targetZ = this.player.z - 20;
-
-        this.camera.position.x += (targetX - this.camera.position.x) * 0.05;
-        this.camera.position.y += (targetY - this.camera.position.y) * 0.05;
-        this.camera.position.z += (targetZ - this.camera.position.z) * 0.05;
-
-        // Make camera look directly at the falling player
-        this.camera.lookAt(this.player.x, this.player.y, this.player.z);
-
-        this.player.mesh.position.x = this.player.x;
-        this.player.mesh.position.y = this.player.y;
-        this.player.mesh.position.z = this.player.z;
-      }
+      this.camera.position.x += (targetX - this.camera.position.x) * 0.05;
+      this.camera.position.y += (targetY - this.camera.position.y) * 0.05;
+      this.camera.position.z += (targetZ - this.camera.position.z) * 0.05;
+      this.camera.lookAt(this.player.x, 0, this.player.z);
     }
   }
 }

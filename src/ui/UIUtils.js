@@ -12,8 +12,9 @@ export function gameAlert(message) {
         .modal-ribbon.pink { background: linear-gradient(180deg, #E1BEE7 0%, #7B1FA2 100%); box-shadow: 0 4px 0 #4A148C, 0 4px 10px rgba(0,0,0,0.3); border-color: #F3E5F5; }
         .modal-ribbon span { font-family: 'Arial Black', Impact, sans-serif; color: #ffffff; font-weight: bold; font-size: 17px; letter-spacing: 1px; text-shadow: 1.5px 1.5px 2px rgba(0,0,0,0.4); }
         .msg-text { font-family: 'Outfit', sans-serif; font-size: 18px; color: #4A148C; font-weight: bold; margin-bottom: 25px; line-height: 1.4; }
-        .icon-btn { width: 50px; height: 50px; cursor: pointer; transition: transform 0.1s; }
-        .icon-btn:hover { transform: scale(1.1); filter: brightness(1.1); }
+        .icon-btn { width: 50px; height: 50px; cursor: pointer; transition: transform 0.1s ease-out; }
+        @media (hover: hover) { .icon-btn:hover { transform: translateY(-1px); } }
+        .icon-btn:active { transform: translateY(2px) scale(0.96); }
       `;
       document.head.appendChild(style);
     }

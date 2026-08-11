@@ -2,6 +2,22 @@ import * as THREE from "three";
 import gsap from "gsap";
 import { winkGame } from "../integrations/wink/wink-adapter.js";
 
+const BUTTON_THEMES = {
+  green: { top: "#7BBF82", bottom: "#469A5C", shadow: "#2F7146" },
+  orange: { top: "#FF9B65", bottom: "#E76F43", shadow: "#B54731" },
+  blue: { top: "#78C7E8", bottom: "#368FBE", shadow: "#276A91" },
+  red: { top: "#EE7A73", bottom: "#D6534F", shadow: "#A43B3A" },
+  yellow: { top: "#F4D35E", bottom: "#E2A93B", shadow: "#AD6B22" },
+};
+
+const BUTTON_HIGHLIGHT = "#FFF8E7";
+const MAIN_MENU_BACKGROUND_PATH = "/assest/image/bg_zigzag_village.png";
+const MAIN_MENU_BACKGROUND_ASPECT = 1778 / 884;
+
+function getButtonTheme(theme) {
+  return BUTTON_THEMES[theme] || BUTTON_THEMES.yellow;
+}
+
 function getEffectiveUser() {
   try {
     const savedUser = window.localStorage.getItem("google_user");
@@ -43,6 +59,14 @@ export class UIManager {
     this.onToggleSfx = null;
     this.onPlayClick = null;
 
+    // The menu backdrop lives outside activeGroup so opening a popup does not
+    // dispose it and expose the plain world clear color behind the modal.
+    this.menuBackgroundGroup = new THREE.Group();
+    this.menuBackgroundGroup.visible = false;
+    this.scene.add(this.menuBackgroundGroup);
+    this.menuBackgroundSprite = null;
+    this.menuBackgroundVeil = null;
+
     this.activeGroup = new THREE.Group();
     this.scene.add(this.activeGroup);
 
@@ -50,6 +74,10 @@ export class UIManager {
     this.scene.add(this.hudGroup);
 
     this.scoreSprite = null;
+    this.canvasDisplayFont =
+      document.documentElement.dataset.gameDisplayFont === "baloo"
+        ? '"Baloo 2", "Be Vietnam Pro", sans-serif'
+        : '"Segoe UI", Arial, sans-serif';
 
     domElement.addEventListener("pointermove", this.onPointerMove.bind(this));
     domElement.addEventListener("pointerdown", this.onPointerDown.bind(this));
@@ -147,6 +175,8 @@ export class UIManager {
   }
 
   clear() {
+    this.setMainMenuBackgroundVisible(false);
+
     // Clear HTML popups
     const settings = document.getElementById("game-settings-overlay-id");
     if (settings) settings.remove();
@@ -170,6 +200,63 @@ export class UIManager {
       this.hudGroup.remove(child);
     }
     this.interactiveObjects = [];
+  }
+
+  setMainMenuBackgroundVisible(visible) {
+    if (!visible) {
+      this.menuBackgroundGroup.visible = false;
+      return;
+    }
+
+    if (!this.menuBackgroundSprite) {
+      const backgroundTexture = new THREE.TextureLoader().load(
+        MAIN_MENU_BACKGROUND_PATH,
+      );
+      backgroundTexture.colorSpace = THREE.SRGBColorSpace;
+      backgroundTexture.minFilter = THREE.LinearMipmapLinearFilter;
+      backgroundTexture.magFilter = THREE.LinearFilter;
+
+      this.menuBackgroundSprite = new THREE.Sprite(
+        new THREE.SpriteMaterial({
+          map: backgroundTexture,
+          color: 0xa8b7a8,
+          depthTest: false,
+          depthWrite: false,
+        }),
+      );
+      this.menuBackgroundSprite.position.set(0, 0, -2);
+      this.menuBackgroundSprite.renderOrder = -20;
+      this.menuBackgroundGroup.add(this.menuBackgroundSprite);
+
+      this.menuBackgroundVeil = new THREE.Sprite(
+        new THREE.SpriteMaterial({
+          color: 0x0b1d10,
+          transparent: true,
+          opacity: 0.38,
+          depthTest: false,
+          depthWrite: false,
+        }),
+      );
+      this.menuBackgroundVeil.position.set(0, 0, -1.9);
+      this.menuBackgroundVeil.renderOrder = -19;
+      this.menuBackgroundGroup.add(this.menuBackgroundVeil);
+    }
+
+    const screenW = window.innerWidth;
+    const screenH = window.innerHeight;
+    const viewportAspect = screenW / screenH;
+    const backgroundWidth =
+      viewportAspect > MAIN_MENU_BACKGROUND_ASPECT
+        ? screenW
+        : screenH * MAIN_MENU_BACKGROUND_ASPECT;
+    const backgroundHeight =
+      viewportAspect > MAIN_MENU_BACKGROUND_ASPECT
+        ? screenW / MAIN_MENU_BACKGROUND_ASPECT
+        : screenH;
+
+    this.menuBackgroundSprite.scale.set(backgroundWidth, backgroundHeight, 1);
+    this.menuBackgroundVeil.scale.set(screenW, screenH, 1);
+    this.menuBackgroundGroup.visible = true;
   }
 
   createTextureFromCanvas(drawCallback, width, height) {
@@ -201,29 +288,11 @@ export class UIManager {
 
     const texture = this.createTextureFromCanvas(
       (ctx) => {
-        let colorTop, colorBot, colorShadow;
-        if (color === "green") {
-          colorTop = "#66BB6A";
-          colorBot = "#43A047";
-          colorShadow = "#2e7d32";
-        } else if (color === "orange") {
-          colorTop = "#FF7043";
-          colorBot = "#F4511E";
-          colorShadow = "#D84315";
-        } else if (color === "blue") {
-          colorTop = "#4FC3F7";
-          colorBot = "#039BE5";
-          colorShadow = "#0277BD";
-        } else if (color === "red") {
-          colorTop = "#E53935";
-          colorBot = "#E53935";
-          colorShadow = "#C62828";
-        } else {
-          // yellow
-          colorTop = "#FFF176";
-          colorBot = "#FBC02D";
-          colorShadow = "#F57F17";
-        }
+        const {
+          top: colorTop,
+          bottom: colorBot,
+          shadow: colorShadow,
+        } = getButtonTheme(color);
 
         ctx.translate(padX, padY);
         const w = width;
@@ -245,15 +314,12 @@ export class UIManager {
         ctx.roundRect(0, 0, w, h, radius);
         ctx.fill();
 
-        ctx.strokeStyle = "#ffffff";
+        ctx.strokeStyle = BUTTON_HIGHLIGHT;
         ctx.lineWidth = strokeWidth;
         ctx.stroke();
 
         // Text with Stroke
-        ctx.font =
-          "900 " +
-          Math.max(16, radius * 0.9) +
-          'px "Fredoka", "Baloo 2", "Be Vietnam Pro", sans-serif';
+        ctx.font = `900 ${Math.max(16, radius * 0.9)}px ${this.canvasDisplayFont}`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
 
@@ -262,7 +328,7 @@ export class UIManager {
         ctx.lineJoin = "round";
         ctx.strokeText(text, w / 2, h / 2);
 
-        ctx.fillStyle = "#ffffff";
+        ctx.fillStyle = BUTTON_HIGHLIGHT;
         ctx.fillText(text, w / 2, h / 2);
       },
       canvasW,
@@ -308,28 +374,11 @@ export class UIManager {
     canvas.height = canvasH;
     const ctx = canvas.getContext("2d");
 
-    let colorTop, colorBot, colorShadow;
-    if (theme === "green") {
-      colorTop = "#66BB6A";
-      colorBot = "#43A047";
-      colorShadow = "#2e7d32";
-    } else if (theme === "orange") {
-      colorTop = "#FF7043";
-      colorBot = "#F4511E";
-      colorShadow = "#D84315";
-    } else if (theme === "blue") {
-      colorTop = "#4FC3F7";
-      colorBot = "#039BE5";
-      colorShadow = "#0277BD";
-    } else if (theme === "red") {
-      colorTop = "#E53935";
-      colorBot = "#E53935";
-      colorShadow = "#C62828";
-    } else {
-      colorTop = "#FFF176";
-      colorBot = "#FBC02D";
-      colorShadow = "#F57F17";
-    }
+    const {
+      top: colorTop,
+      bottom: colorBot,
+      shadow: colorShadow,
+    } = getButtonTheme(theme);
 
     ctx.translate(pad, pad);
     ctx.fillStyle = colorShadow;
@@ -346,7 +395,7 @@ export class UIManager {
     ctx.arc(radius, radius, radius, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.strokeStyle = "#ffffff";
+    ctx.strokeStyle = BUTTON_HIGHLIGHT;
     ctx.lineWidth = strokeWidth;
     ctx.stroke();
 
@@ -371,17 +420,17 @@ export class UIManager {
       const iconScale = (w * 0.6) / 24;
       ctx.scale(iconScale, iconScale);
       ctx.translate(-12, -12);
-      ctx.fillStyle = "#ffffff";
+      ctx.fillStyle = BUTTON_HIGHLIGHT;
       ctx.fill(p);
       ctx.restore();
     } else if (iconNameStr === "x2") {
       ctx.font = '900 32px "Segoe UI", Arial';
-      ctx.fillStyle = "#ffffff";
+      ctx.fillStyle = BUTTON_HIGHLIGHT;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText("x2", radius, radius);
     } else {
-      ctx.fillStyle = "#ffffff";
+      ctx.fillStyle = BUTTON_HIGHLIGHT;
       ctx.beginPath();
       ctx.arc(radius, radius, radius * 0.3, 0, Math.PI * 2);
       ctx.fill();
@@ -401,29 +450,11 @@ export class UIManager {
 
     const texture = this.createTextureFromCanvas(
       (ctx) => {
-        let colorTop, colorBot, colorShadow;
-        if (theme === "green") {
-          colorTop = "#66BB6A";
-          colorBot = "#43A047";
-          colorShadow = "#2e7d32";
-        } else if (theme === "orange") {
-          colorTop = "#FF7043";
-          colorBot = "#F4511E";
-          colorShadow = "#D84315";
-        } else if (theme === "blue") {
-          colorTop = "#4FC3F7";
-          colorBot = "#039BE5";
-          colorShadow = "#0277BD";
-        } else if (theme === "red") {
-          colorTop = "#E53935";
-          colorBot = "#E53935";
-          colorShadow = "#C62828";
-        } else {
-          // yellow
-          colorTop = "#FFF176";
-          colorBot = "#FBC02D";
-          colorShadow = "#F57F17";
-        }
+        const {
+          top: colorTop,
+          bottom: colorBot,
+          shadow: colorShadow,
+        } = getButtonTheme(theme);
 
         ctx.translate(pad, pad);
 
@@ -441,7 +472,7 @@ export class UIManager {
         ctx.arc(radius, radius, radius, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.strokeStyle = "#ffffff";
+        ctx.strokeStyle = BUTTON_HIGHLIGHT;
         ctx.lineWidth = strokeWidth;
         ctx.stroke();
 
@@ -466,11 +497,11 @@ export class UIManager {
           const iconScale = (w * 0.6) / 24;
           ctx.scale(iconScale, iconScale);
           ctx.translate(-12, -12);
-          ctx.fillStyle = "#ffffff";
+          ctx.fillStyle = BUTTON_HIGHLIGHT;
           ctx.fill(p);
           ctx.restore();
         } else {
-          ctx.fillStyle = "#ffffff";
+          ctx.fillStyle = BUTTON_HIGHLIGHT;
           ctx.beginPath();
           ctx.arc(radius, radius, radius * 0.3, 0, Math.PI * 2);
           ctx.fill();
@@ -649,8 +680,11 @@ export class UIManager {
 
   showMainMenu(stats) {
     this.clear();
+    this.setMainMenuBackgroundVisible(true);
     const highScore =
       stats && stats.highScore !== undefined ? stats.highScore : 0;
+
+    const screenW = window.innerWidth;
 
     const titleTex = this.createTextureFromCanvas(
       (ctx, w) => {
@@ -713,7 +747,6 @@ export class UIManager {
     );
 
     // Scale dynamically based on screen width to fit all devices
-    const screenW = window.innerWidth;
     let scaleW = 600;
     let scaleH = 350;
     if (screenW < 600) {
@@ -732,7 +765,7 @@ export class UIManager {
       () => {
         if (this.onPlay) this.onPlay();
       },
-      "yellow",
+      "orange",
     );
     playBtn.position.set(0, -60, 0);
     this.activeGroup.add(playBtn);
@@ -742,7 +775,7 @@ export class UIManager {
       () => {
         if (this.onAchievements) this.onAchievements();
       },
-      70,
+      62,
       "yellow",
     );
     trophyBtn.position.set(-80, -180, 0);
@@ -753,8 +786,8 @@ export class UIManager {
       () => {
         if (this.onSettings) this.onSettings();
       },
-      70,
-      "yellow",
+      62,
+      "blue",
     );
     settingsBtn.position.set(80, -180, 0);
     this.activeGroup.add(settingsBtn);
@@ -762,6 +795,7 @@ export class UIManager {
 
   showSettings(isIngame = false) {
     this.clear();
+    this.setMainMenuBackgroundVisible(!isIngame);
     this.injectHTMLPopupStyles();
 
     const existing = document.getElementById("game-settings-overlay-id");
@@ -869,7 +903,7 @@ export class UIManager {
       // Home
       const homeBtn = document.createElement("button");
       homeBtn.className = "game-paused-btn";
-      homeBtn.style.backgroundImage = `url(${this.getIconBase64("home")})`;
+      homeBtn.style.backgroundImage = `url(${this.getIconBase64("home", "blue")})`;
       homeBtn.addEventListener("click", () => {
         this.playClickSound();
         overlay.remove();
@@ -881,7 +915,7 @@ export class UIManager {
       // Replay
       const replayBtn = document.createElement("button");
       replayBtn.className = "game-paused-btn";
-      replayBtn.style.backgroundImage = `url(${this.getIconBase64("replay")})`;
+      replayBtn.style.backgroundImage = `url(${this.getIconBase64("replay", "yellow")})`;
       replayBtn.addEventListener("click", () => {
         this.playClickSound();
         overlay.remove();
@@ -892,7 +926,7 @@ export class UIManager {
       // Continue
       const continueBtn = document.createElement("button");
       continueBtn.className = "game-paused-btn";
-      continueBtn.style.backgroundImage = `url(${this.getIconBase64("play")})`;
+      continueBtn.style.backgroundImage = `url(${this.getIconBase64("play", "green")})`;
       continueBtn.addEventListener("click", () => {
         this.playClickSound();
         overlay.remove();
@@ -985,7 +1019,7 @@ export class UIManager {
     if (canDoubleReward) {
       const x2Btn = document.createElement("button");
       x2Btn.className = "game-paused-btn";
-      x2Btn.style.backgroundImage = `url(${this.getIconBase64("x2")})`;
+      x2Btn.style.backgroundImage = `url(${this.getIconBase64("x2", "orange")})`;
       x2Btn.addEventListener("click", () => {
         this.playClickSound();
         overlay.remove();
@@ -997,7 +1031,7 @@ export class UIManager {
     // Replay
     const replayBtn = document.createElement("button");
     replayBtn.className = "game-paused-btn";
-    replayBtn.style.backgroundImage = `url(${this.getIconBase64("replay")})`;
+    replayBtn.style.backgroundImage = `url(${this.getIconBase64("replay", "yellow")})`;
     replayBtn.addEventListener("click", () => {
       this.playClickSound();
       overlay.remove();
@@ -1008,7 +1042,7 @@ export class UIManager {
     // Home
     const homeBtn = document.createElement("button");
     homeBtn.className = "game-paused-btn";
-    homeBtn.style.backgroundImage = `url(${this.getIconBase64("home")})`;
+    homeBtn.style.backgroundImage = `url(${this.getIconBase64("home", "blue")})`;
     homeBtn.addEventListener("click", () => {
       this.playClickSound();
       overlay.remove();
@@ -1090,11 +1124,11 @@ export class UIManager {
     btnContainer.style.gap = "15px";
 
     const yesBtn = document.createElement("button");
-    yesBtn.style.background = "linear-gradient(to bottom, #FFF176, #FBC02D)";
+    yesBtn.style.background = "linear-gradient(to bottom, #FF9B65, #E76F43)";
     yesBtn.style.border = "none";
     yesBtn.style.borderRadius = "12px";
     yesBtn.style.padding = "10px 60px";
-    yesBtn.style.color = "#47363B";
+    yesBtn.style.color = BUTTON_HIGHLIGHT;
     yesBtn.style.fontSize = "26px";
     yesBtn.style.fontWeight = "900";
     yesBtn.style.fontFamily = '"Segoe UI", Arial, sans-serif';
@@ -1102,7 +1136,7 @@ export class UIManager {
     yesBtn.style.display = "flex";
     yesBtn.style.alignItems = "center";
     yesBtn.style.justifyContent = "center";
-    yesBtn.style.boxShadow = "0 6px 0 #F57F17, 0 8px 10px rgba(0,0,0,0.3)";
+    yesBtn.style.boxShadow = "0 6px 0 #B54731, 0 8px 10px rgba(71,41,34,0.24)";
     yesBtn.style.transition = "transform 0.1s, box-shadow 0.1s";
 
     // Add video icon
@@ -1121,15 +1155,17 @@ export class UIManager {
     // Click effect for yesBtn
     yesBtn.addEventListener("mousedown", () => {
       yesBtn.style.transform = "translateY(6px)";
-      yesBtn.style.boxShadow = "0 0px 0 #F57F17, 0 2px 5px rgba(0,0,0,0.3)";
+      yesBtn.style.boxShadow = "0 0 0 #B54731, 0 2px 5px rgba(71,41,34,0.24)";
     });
     yesBtn.addEventListener("mouseup", () => {
       yesBtn.style.transform = "translateY(0)";
-      yesBtn.style.boxShadow = "0 6px 0 #F57F17, 0 8px 10px rgba(0,0,0,0.3)";
+      yesBtn.style.boxShadow =
+        "0 6px 0 #B54731, 0 8px 10px rgba(71,41,34,0.24)";
     });
     yesBtn.addEventListener("mouseleave", () => {
       yesBtn.style.transform = "translateY(0)";
-      yesBtn.style.boxShadow = "0 6px 0 #F57F17, 0 8px 10px rgba(0,0,0,0.3)";
+      yesBtn.style.boxShadow =
+        "0 6px 0 #B54731, 0 8px 10px rgba(71,41,34,0.24)";
     });
 
     yesBtn.addEventListener("click", () => {
@@ -1204,12 +1240,12 @@ export class UIManager {
       () => {
         if (this.onSettings) this.onSettings();
       },
-      50,
-      "yellow",
+      44,
+      "blue",
     );
     settingsBtn.position.set(
-      window.innerWidth / 2 - 50,
-      window.innerHeight / 2 - 50,
+      window.innerWidth / 2 - 42,
+      window.innerHeight / 2 - 42,
       0,
     );
     this.hudGroup.add(settingsBtn);
@@ -1296,6 +1332,7 @@ export class UIManager {
 
   showAchievements(stats) {
     this.clear();
+    this.setMainMenuBackgroundVisible(true);
     this.injectHTMLPopupStyles();
 
     const existing = document.getElementById("game-achievements-overlay-id");
@@ -1543,11 +1580,11 @@ export class UIManager {
           transform: scale(0.95);
         }
         .game-settings-reset-btn {
-          background: linear-gradient(180deg, #FFF176 0%, #FBC02D 100%);
+          background: linear-gradient(180deg, #EE7A73 0%, #D6534F 100%);
           border: none;
-          box-shadow: 0 4px 0 #F57F17;
+          box-shadow: 0 4px 0 #A43B3A;
           border-radius: 12px;
-          color: #47363B;
+          color: #FFF8E7;
           font-family: 'Be Vietnam Pro', sans-serif;
           font-size: 14px;
           font-weight: 800;
@@ -1555,7 +1592,7 @@ export class UIManager {
           cursor: pointer;
           margin-top: 20px;
           transition: transform 0.1s ease, filter 0.1s ease;
-          text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+          text-shadow: 0 1px 2px rgba(78, 35, 33, 0.22);
           display: inline-flex;
           align-items: center;
           justify-content: center;
@@ -1567,12 +1604,11 @@ export class UIManager {
           object-fit: contain;
         }
         .game-settings-reset-btn:hover {
-          transform: scale(1.05);
-          filter: brightness(1.05);
+          transform: translateY(-1px);
         }
         .game-settings-reset-btn:active {
           transform: translateY(2px);
-          box-shadow: 0 2px 0 #F57F17;
+          box-shadow: 0 2px 0 #A43B3A;
         }
 
         /* Paused popup */
