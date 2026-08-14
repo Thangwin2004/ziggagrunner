@@ -4,7 +4,7 @@ import { winkGame } from "./integrations/wink/wink-adapter.js";
 
 // 1. Setup Three.js Scene, Camera, Renderer
 const scene = new THREE.Scene();
-const bgTexture = new THREE.TextureLoader().load("/assest/image/bg.png");
+const bgTexture = new THREE.TextureLoader().load("/assest/image/bg.webp");
 bgTexture.colorSpace = THREE.SRGBColorSpace;
 scene.background = bgTexture;
 

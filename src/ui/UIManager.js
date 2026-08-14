@@ -476,12 +476,12 @@ export class UIManager {
       h = 40;
 
     const texOn = new THREE.TextureLoader().load(
-      "/assest/iconbtn/toggle_on.png",
+      "/assest/iconbtn/toggle_on.webp",
     );
     texOn.colorSpace = THREE.SRGBColorSpace;
 
     const texOff = new THREE.TextureLoader().load(
-      "/assest/iconbtn/toggle_off.png",
+      "/assest/iconbtn/toggle_off.webp",
     );
     texOff.colorSpace = THREE.SRGBColorSpace;
 
@@ -1086,7 +1086,7 @@ export class UIManager {
 
     // Add video icon
     const videoIcon = document.createElement("img");
-    videoIcon.src = "/assest/iconbtn/images.png";
+    videoIcon.src = "/assest/iconbtn/images.webp";
     videoIcon.style.height = "30px";
     videoIcon.style.width = "auto";
     videoIcon.style.marginRight = "15px";
@@ -1461,7 +1461,7 @@ export class UIManager {
           width: 40px;
           height: 40px;
           border: none;
-          background: url(/assest/iconbtn/close_btn.png) no-repeat center center;
+          background: url(/assest/iconbtn/close_btn.webp) no-repeat center center;
           background-size: contain;
           cursor: pointer;
           transition: transform 0.15s ease;

@@ -37,7 +37,7 @@ export function gameAlert(message) {
 
     const okBtn = document.createElement("img");
     okBtn.className = "icon-btn";
-    okBtn.src = "/assest/iconbtn/yes_btn.png";
+    okBtn.src = "/assest/iconbtn/yes_btn.webp";
     okBtn.style.marginTop = "10px";
 
     okBtn.onclick = () => {
@@ -88,7 +88,7 @@ export function gameConfirm(message) {
 
     const noBtn = document.createElement("img");
     noBtn.className = "icon-btn";
-    noBtn.src = "/assest/iconbtn/close_btn.png";
+    noBtn.src = "/assest/iconbtn/close_btn.webp";
     noBtn.onclick = () => {
       document.body.removeChild(overlay);
       resolve(false);
@@ -96,7 +96,7 @@ export function gameConfirm(message) {
 
     const yesBtn = document.createElement("img");
     yesBtn.className = "icon-btn";
-    yesBtn.src = "/assest/iconbtn/yes_btn.png";
+    yesBtn.src = "/assest/iconbtn/yes_btn.webp";
     yesBtn.onclick = () => {
       document.body.removeChild(overlay);
       resolve(true);
