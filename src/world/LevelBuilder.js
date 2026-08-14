@@ -15,15 +15,15 @@ export class LevelBuilder {
     // Load Textures
     const textureLoader = new THREE.TextureLoader();
     const coinTex = textureLoader.load(
-      "/assest/image/Ref-20260630T071202Z-3-001/Ref/Props/BanhChungBanhTet (1).png",
+      "/assest/image/Ref-20260630T071202Z-3-001/Ref/Props/BanhChungBanhTet (1).webp",
     );
     coinTex.colorSpace = THREE.SRGBColorSpace;
 
     this.modelTextures = {
-      atlas: textureLoader.load("/assest/assets3d/Textures/Atlas1.png"),
-      cars: textureLoader.load("/assest/assets3d/Textures/cars.png"),
-      rock: textureLoader.load("/assest/assets3d/Textures/Rock1.png"),
-      roads: textureLoader.load("/assest/assets3d/Textures/Roads.png"),
+      atlas: textureLoader.load("/assest/assets3d/Textures/Atlas1.webp"),
+      cars: textureLoader.load("/assest/assets3d/Textures/cars.webp"),
+      rock: textureLoader.load("/assest/assets3d/Textures/Rock1.webp"),
+      roads: textureLoader.load("/assest/assets3d/Textures/Roads.webp"),
     };
     Object.values(this.modelTextures).forEach(
       (t) => (t.colorSpace = THREE.SRGBColorSpace),
@@ -31,7 +31,7 @@ export class LevelBuilder {
 
     // Top surface texture
     const roadTex = textureLoader.load(
-      "/assest/image/Ref-20260630T071202Z-3-001/Ref/Environment/matnen.png",
+      "/assest/image/Ref-20260630T071202Z-3-001/Ref/Environment/matnen.webp",
     );
     roadTex.colorSpace = THREE.SRGBColorSpace;
     roadTex.wrapS = THREE.RepeatWrapping;
@@ -40,7 +40,7 @@ export class LevelBuilder {
 
     // Side surface texture
     const wallTex = textureLoader.load(
-      "/assest/image/Ref-20260630T071202Z-3-001/Ref/Environment/gach.png",
+      "/assest/image/Ref-20260630T071202Z-3-001/Ref/Environment/gach.webp",
     );
     wallTex.colorSpace = THREE.SRGBColorSpace;
     wallTex.wrapS = THREE.RepeatWrapping;
@@ -48,14 +48,14 @@ export class LevelBuilder {
     wallTex.repeat.set(5, 1);
 
     const cloudTex = textureLoader.load(
-      "/assest/image/Ref-20260630T071202Z-3-001/Ref/Character/cloudball.png",
+      "/assest/image/Ref-20260630T071202Z-3-001/Ref/Character/cloudball.webp",
     );
     cloudTex.colorSpace = THREE.SRGBColorSpace;
 
-    const tex1 = textureLoader.load("/assest/image/vietnam_tribe_scenery.png");
-    const tex2 = textureLoader.load("/assest/image/vietnam_tribe_hoian.png");
-    const tex3 = textureLoader.load("/assest/image/vietnam_tribe_beach.png");
-    const tex4 = textureLoader.load("/assest/image/vietnam_tribe_sapa.png");
+    const tex1 = textureLoader.load("/assest/image/vietnam_tribe_scenery.webp");
+    const tex2 = textureLoader.load("/assest/image/vietnam_tribe_hoian.webp");
+    const tex3 = textureLoader.load("/assest/image/vietnam_tribe_beach.webp");
+    const tex4 = textureLoader.load("/assest/image/vietnam_tribe_sapa.webp");
 
     this.sceneryTextures = [tex1, tex2, tex3, tex4];
     this.sceneryTextures.forEach((t) => {

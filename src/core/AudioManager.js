@@ -32,7 +32,7 @@ export class AudioManager {
 
   async loadBGM() {
     try {
-      const response = await window.fetch("/assest/music/IngameMusic1.wav");
+      const response = await window.fetch("/assest/music/IngameMusic1.m4a");
       const arrayBuffer = await response.arrayBuffer();
       const audioBuffer = await this.ctx.decodeAudioData(arrayBuffer);
       this.buffers[this.bgmBufferName] = audioBuffer;
