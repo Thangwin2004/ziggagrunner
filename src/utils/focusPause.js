@@ -12,7 +12,9 @@ export function installFocusPause({
   const safelyCall = (callback) => {
     try {
       const result = callback();
-      if (result && typeof result.catch === "function") result.catch(() => {});
+      if (result && typeof result.catch === "function") {
+        result.catch(() => {});
+      }
     } catch {
       // Lifecycle pause must never crash the host game.
     }
@@ -23,32 +25,44 @@ export function installFocusPause({
     const firstReason = pauseReasons.size === 0;
     pauseReasons.add(reason);
     if (!firstReason) return;
+
     shouldResume = Boolean(isRunning());
     safelyCall(pause);
     safelyCall(pauseAudio);
   };
 
   const resumeFor = (reason) => {
-    if (destroyed || !pauseReasons.delete(reason) || pauseReasons.size > 0) return;
+    if (destroyed || !pauseReasons.delete(reason) || pauseReasons.size > 0) {
+      return;
+    }
     const resumeNow = shouldResume;
     shouldResume = false;
     safelyCall(resumeAudio);
-    if (resumeNow) safelyCall(resume);
+    if (!resumeNow) return;
+    safelyCall(resume);
   };
 
-  const handleVisibility = () => document.visibilityState === "hidden"
-    ? pauseFor("visibility")
-    : resumeFor("visibility");
+  const handleVisibility = () => {
+    if (document.visibilityState === "hidden") pauseFor("visibility");
+    else resumeFor("visibility");
+  };
   const handleBlur = () => pauseFor("focus");
   const handleFocus = () => resumeFor("focus");
   const handlePageHide = () => pauseFor("page");
   const handlePageShow = () => resumeFor("page");
-  const viewportObserver = typeof IntersectionObserver === "undefined"
-    ? null
-    : new IntersectionObserver(([entry]) => {
-        if (entry?.isIntersecting && entry.intersectionRatio >= 0.15) resumeFor("viewport");
-        else pauseFor("viewport");
-      }, { threshold: [0, 0.15] });
+  const viewportObserver =
+    typeof window !== "undefined" && "IntersectionObserver" in window
+      ? new window.IntersectionObserver(
+          ([entry]) => {
+            if (entry?.isIntersecting && entry.intersectionRatio >= 0.15) {
+              resumeFor("viewport");
+            } else {
+              pauseFor("viewport");
+            }
+          },
+          { threshold: [0, 0.15] },
+        )
+      : null;
 
   document.addEventListener("visibilitychange", handleVisibility);
   window.addEventListener("blur", handleBlur);
@@ -56,6 +70,7 @@ export function installFocusPause({
   window.addEventListener("pagehide", handlePageHide);
   window.addEventListener("pageshow", handlePageShow);
   viewportObserver?.observe(document.documentElement);
+
   if (document.visibilityState === "hidden") pauseFor("visibility");
 
   return {
