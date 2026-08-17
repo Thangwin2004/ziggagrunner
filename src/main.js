@@ -66,8 +66,10 @@ document.fonts.ready.then(() => {
   // ── Wink Bridge lifecycle binding ──
   winkGame.bindLifecycle({
     onPause: () => {
-      // The game loop uses THREE.Clock, so we pause updating if needed
-      // but GameManager has its own pause state. We can force it to PAUSED
+      // Unconditional, and first: a warm frame sits at the menu rather than in
+      // PLAYING, so gating the freeze on the run state — as this used to — meant
+      // the one case the feed actually pauses for was the one case it skipped.
+      stopRenderLoop();
       if (game && game.state === "PLAYING") {
         game.state = "PAUSED";
         game.audio.stopRun();
@@ -75,6 +77,7 @@ document.fonts.ready.then(() => {
       }
     },
     onResume: () => {
+      startRenderLoop();
       // The UI will handle resuming, but if we need to force it:
       if (game && game.state === "PAUSED") {
         game.state = "PLAYING";
@@ -123,8 +126,17 @@ window.addEventListener("resize", handleResize);
 const clock = new THREE.Clock();
 renderer.autoClear = false; // Important for dual scene
 
+// The Wink feed keeps the next game in the swipe mounted so it is ready the
+// instant it is reached, and tells it to freeze until then. Freezing has to
+// reach this loop to mean anything: GameManager carries its own PAUSED state,
+// but the two renderer.render() calls below run whichever state it is in, so a
+// frame nobody is looking at was still drawing two scenes every tick against
+// the GPU budget of the game the player is actually holding. Cancelling the
+// callback is the only version of "paused" that costs nothing.
+let frameHandle = null;
+
 function animate() {
-  requestAnimationFrame(animate);
+  frameHandle = requestAnimationFrame(animate);
 
   const deltaTime = clock.getDelta();
   if (game) game.update(deltaTime);
@@ -139,6 +151,23 @@ function animate() {
   renderer.clearDepth();
   renderer.render(uiScene, uiCamera);
 }
+
+function startRenderLoop() {
+  if (frameHandle !== null) return;
+  // Drop the wall-clock time spent frozen. THREE.Clock measures real elapsed
+  // time, so without this the first frame after a resume hands GameManager one
+  // enormous delta and the player is already somewhere else by the time they
+  // see anything.
+  clock.getDelta();
+  frameHandle = requestAnimationFrame(animate);
+}
+
+function stopRenderLoop() {
+  if (frameHandle === null) return;
+  cancelAnimationFrame(frameHandle);
+  frameHandle = null;
+}
+
 animate();
 
 // 7. Hide Splash Screen with fake loading progress
