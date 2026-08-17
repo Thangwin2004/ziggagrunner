@@ -35,6 +35,7 @@ export default [
         Audio: "readonly",
         console: "readonly",
         requestAnimationFrame: "readonly",
+        cancelAnimationFrame: "readonly",
         Promise: "readonly",
         Math: "readonly",
       },
