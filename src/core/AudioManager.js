@@ -122,6 +122,16 @@ export class AudioManager {
     this.sfxGain.gain.value = enabled ? 1 : 0;
   }
 
+  async pauseForFocus() {
+    this.wasContextRunningBeforeFocus = this.ctx?.state === "running";
+    if (this.wasContextRunningBeforeFocus) await this.ctx.suspend();
+  }
+
+  async resumeFromFocus() {
+    if (this.wasContextRunningBeforeFocus && this.ctx) await this.ctx.resume();
+    this.wasContextRunningBeforeFocus = false;
+  }
+
   playJump() {
     this.playSound("jump", false, 0.8);
   }
