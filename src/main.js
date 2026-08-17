@@ -1,13 +1,13 @@
 import * as THREE from "three";
 import { GameManager } from "./core/GameManager.js";
 import { winkGame } from "./integrations/wink/wink-adapter.js";
+import { waitForGameFonts } from "./utils/fontLoader.js";
 import { installFocusPause } from "./utils/focusPause.js";
 
 // 1. Setup Three.js Scene, Camera, Renderer
 const scene = new THREE.Scene();
-const bgTexture = new THREE.TextureLoader().load("/assest/image/bg.webp");
-bgTexture.colorSpace = THREE.SRGBColorSpace;
-scene.background = bgTexture;
+scene.background = null;
+scene.fog = new THREE.Fog(0xa9d9c3, 72, 190);
 
 const container = document.getElementById("pixi-container") || document.body;
 const w = container.clientWidth || window.innerWidth;
@@ -21,11 +21,10 @@ const renderer = new THREE.WebGLRenderer({
   powerPreference: "high-performance",
 });
 renderer.setSize(w, h);
-// Cap pixel ratio to 1.5 to prevent extreme lag on retina/mobile screens (which can be 3x or 4x)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-renderer.shadowMap.enabled = false; // Disabled to reduce lag on mobile
+renderer.shadowMap.enabled = false;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.0;
+renderer.toneMappingExposure = 1.05;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 if (container.id === "pixi-container") {
@@ -35,19 +34,28 @@ if (container.id === "pixi-container") {
   document.body.appendChild(renderer.domElement);
 }
 
-// 2. Add Lighting & Effects
-scene.fog = new THREE.Fog(0x87ceeb, 45, 120); // Linear fog: clear near player, foggy in background
-
-const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.9);
-hemiLight.position.set(0, 20, 0);
+// 2. Add Lighting
+const hemiLight = new THREE.HemisphereLight(0xffffff, 0x666666, 1.0);
+hemiLight.position.set(0, 30, 0);
 scene.add(hemiLight);
 
 const dirLight = new THREE.DirectionalLight(0xffffff, 1.8);
 dirLight.position.set(20, 40, -20);
-dirLight.castShadow = false; // Disabled to reduce lag
+dirLight.castShadow = false;
 scene.add(dirLight);
 
-// 3. Setup UI Scene (Dual Scene)
+// 3. Setup Background & UI Scenes (3-Pass Rendering Pipeline)
+const bgScene = new THREE.Scene();
+const bgCamera = new THREE.OrthographicCamera(
+  -w / 2,
+  w / 2,
+  h / 2,
+  -h / 2,
+  0.1,
+  10,
+);
+bgCamera.position.z = 5;
+
 const uiScene = new THREE.Scene();
 const uiCamera = new THREE.OrthographicCamera(
   -w / 2,
@@ -61,15 +69,35 @@ uiCamera.position.z = 5;
 
 // 4. Wait for fonts before init Game Manager
 let game;
-document.fonts.ready.then(() => {
-  game = new GameManager(scene, camera, uiScene, uiCamera, renderer.domElement);
+const clock = new THREE.Clock();
+
+async function initializeGame() {
+  await waitForGameFonts([
+    "400 1em 'Be Vietnam Pro'",
+    "500 1em 'Be Vietnam Pro'",
+    "700 1em 'Be Vietnam Pro'",
+    "800 1em 'Be Vietnam Pro'",
+    "900 1em 'Be Vietnam Pro'",
+    "700 1em 'Baloo 2'",
+    "800 1em 'Baloo 2'",
+  ]);
+
+  game = new GameManager(
+    scene,
+    camera,
+    uiScene,
+    uiCamera,
+    bgScene,
+    bgCamera,
+    renderer.domElement,
+  );
 
   const focusPause = installFocusPause({
     isRunning: () => frameHandle !== null,
     pause: stopRenderLoop,
     resume: startRenderLoop,
-    pauseAudio: () => game.audio.pauseForFocus(),
-    resumeAudio: () => game.audio.resumeFromFocus(),
+    pauseAudio: () => game?.audio.pauseForFocus(),
+    resumeAudio: () => game?.audio.resumeFromFocus(),
   });
 
   // ── Wink Bridge lifecycle binding ──
@@ -89,7 +117,9 @@ document.fonts.ready.then(() => {
   winkGame.observe((state) => {
     console.log("[WinkBridge] phase:", state.phase);
   });
-});
+}
+
+void initializeGame();
 
 // 5. Handle Resizing
 const handleResize = () => {
@@ -97,6 +127,12 @@ const handleResize = () => {
   const newH = container.clientHeight || window.innerHeight;
   camera.aspect = newW / newH;
   camera.updateProjectionMatrix();
+
+  bgCamera.left = -newW / 2;
+  bgCamera.right = newW / 2;
+  bgCamera.top = newH / 2;
+  bgCamera.bottom = -newH / 2;
+  bgCamera.updateProjectionMatrix();
 
   uiCamera.left = -newW / 2;
   uiCamera.right = newW / 2;
@@ -106,22 +142,13 @@ const handleResize = () => {
 
   renderer.setSize(newW, newH);
   if (game) {
-    game.resize();
+    game.resize(newW, newH);
   }
 };
 window.addEventListener("resize", handleResize);
 
 // 6. Game Loop
-const clock = new THREE.Clock();
-renderer.autoClear = false; // Important for dual scene
-
-// The Wink feed keeps the next game in the swipe mounted so it is ready the
-// instant it is reached, and tells it to freeze until then. Freezing has to
-// reach this loop to mean anything: GameManager carries its own PAUSED state,
-// but the two renderer.render() calls below run whichever state it is in, so a
-// frame nobody is looking at was still drawing two scenes every tick against
-// the GPU budget of the game the player is actually holding. Cancelling the
-// callback is the only version of "paused" that costs nothing.
+renderer.autoClear = false; // Important for 3-pass rendering
 let frameHandle = null;
 
 function animate() {
@@ -136,6 +163,8 @@ function animate() {
   dirLight.target.updateMatrixWorld();
 
   renderer.clear();
+  renderer.render(bgScene, bgCamera);
+  renderer.clearDepth();
   renderer.render(scene, camera);
   renderer.clearDepth();
   renderer.render(uiScene, uiCamera);
@@ -143,10 +172,6 @@ function animate() {
 
 function startRenderLoop() {
   if (frameHandle !== null) return;
-  // Drop the wall-clock time spent frozen. THREE.Clock measures real elapsed
-  // time, so without this the first frame after a resume hands GameManager one
-  // enormous delta and the player is already somewhere else by the time they
-  // see anything.
   clock.getDelta();
   frameHandle = requestAnimationFrame(animate);
 }
