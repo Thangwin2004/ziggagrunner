@@ -7,8 +7,6 @@ import { installFocusPause } from "./utils/focusPause.js";
 // 1. Setup Three.js Scene, Camera, Renderer
 const scene = new THREE.Scene();
 scene.background = null;
-// Linear distance fog starts beyond the player and nearby trail, keeping the
-// foreground colorful while distant turns dissolve into the pastel horizon.
 scene.fog = new THREE.Fog(0xa9d9c3, 72, 190);
 
 const container = document.getElementById("pixi-container") || document.body;
@@ -23,9 +21,8 @@ const renderer = new THREE.WebGLRenderer({
   powerPreference: "high-performance",
 });
 renderer.setSize(w, h);
-// Cap pixel ratio to 1.5 to prevent extreme lag on retina/mobile screens (which can be 3x or 4x)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-renderer.shadowMap.enabled = false; // Disabled to reduce lag on mobile
+renderer.shadowMap.enabled = false;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -44,7 +41,7 @@ scene.add(hemiLight);
 
 const dirLight = new THREE.DirectionalLight(0xffffff, 1.8);
 dirLight.position.set(20, 40, -20);
-dirLight.castShadow = false; // Disabled to reduce lag
+dirLight.castShadow = false;
 scene.add(dirLight);
 
 // 3. Setup Background & UI Scenes (3-Pass Rendering Pipeline)
@@ -72,8 +69,8 @@ uiCamera.position.z = 5;
 
 // 4. Wait for fonts before init Game Manager
 let game;
-let runtimePaused = false;
 const clock = new THREE.Clock();
+
 async function initializeGame() {
   await waitForGameFonts([
     "400 1em 'Be Vietnam Pro'",
@@ -96,16 +93,11 @@ async function initializeGame() {
   );
 
   const focusPause = installFocusPause({
-    isRunning: () => !runtimePaused,
-    pause: () => {
-      runtimePaused = true;
-    },
-    resume: () => {
-      runtimePaused = false;
-      clock.getDelta();
-    },
-    pauseAudio: () => game.audio.pauseForFocus(),
-    resumeAudio: () => game.audio.resumeFromFocus(),
+    isRunning: () => frameHandle !== null,
+    pause: stopRenderLoop,
+    resume: startRenderLoop,
+    pauseAudio: () => game?.audio.pauseForFocus(),
+    resumeAudio: () => game?.audio.resumeFromFocus(),
   });
 
   // ── Wink Bridge lifecycle binding ──
@@ -157,11 +149,10 @@ window.addEventListener("resize", handleResize);
 
 // 6. Game Loop
 renderer.autoClear = false; // Important for 3-pass rendering
+let frameHandle = null;
 
 function animate() {
-  requestAnimationFrame(animate);
-
-  if (runtimePaused) return;
+  frameHandle = requestAnimationFrame(animate);
 
   const deltaTime = clock.getDelta();
   if (game) game.update(deltaTime);
@@ -178,6 +169,19 @@ function animate() {
   renderer.clearDepth();
   renderer.render(uiScene, uiCamera);
 }
+
+function startRenderLoop() {
+  if (frameHandle !== null) return;
+  clock.getDelta();
+  frameHandle = requestAnimationFrame(animate);
+}
+
+function stopRenderLoop() {
+  if (frameHandle === null) return;
+  cancelAnimationFrame(frameHandle);
+  frameHandle = null;
+}
+
 animate();
 
 // 7. Hide Splash Screen with fake loading progress

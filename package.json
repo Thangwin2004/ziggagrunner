@@ -6,7 +6,7 @@
   "scripts": {
     "start": "pnpm run dev",
     "prebuild": "pnpm run verify:wink-bridge",
-    "build": "pnpm run lint && vite build",
+    "build": "pnpm run lint && vite build && node scripts/build-wink-warm.mjs",
     "postbuild": "node scripts/prune-unused-public-assets.mjs",
     "lint": "eslint .",
     "dev": "vite",

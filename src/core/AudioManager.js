@@ -32,7 +32,7 @@ export class AudioManager {
 
   async loadBGM() {
     try {
-      const response = await window.fetch("/assest/music/IngameMusic1.wav");
+      const response = await window.fetch("/assest/music/IngameMusic1.m4a");
       const arrayBuffer = await response.arrayBuffer();
       const audioBuffer = await this.ctx.decodeAudioData(arrayBuffer);
       this.buffers[this.bgmBufferName] = audioBuffer;
@@ -122,6 +122,16 @@ export class AudioManager {
     this.sfxGain.gain.value = enabled ? 1 : 0;
   }
 
+  async pauseForFocus() {
+    this.wasContextRunningBeforeFocus = this.ctx?.state === "running";
+    if (this.wasContextRunningBeforeFocus) await this.ctx.suspend();
+  }
+
+  async resumeFromFocus() {
+    if (this.wasContextRunningBeforeFocus && this.ctx) await this.ctx.resume();
+    this.wasContextRunningBeforeFocus = false;
+  }
+
   playJump() {
     this.playSound("jump", false, 0.8);
   }
@@ -138,18 +148,6 @@ export class AudioManager {
 
   stopRun() {
     // Disabled
-  }
-
-  pauseForFocus() {
-    this.wasContextRunningBeforeFocus = this.ctx.state === "running";
-    if (this.wasContextRunningBeforeFocus) return this.ctx.suspend();
-    return Promise.resolve();
-  }
-
-  resumeFromFocus() {
-    if (!this.wasContextRunningBeforeFocus) return Promise.resolve();
-    this.wasContextRunningBeforeFocus = false;
-    return this.ctx.resume();
   }
 
   playFall() {
