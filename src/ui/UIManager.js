@@ -2,17 +2,18 @@ import * as THREE from "three";
 import gsap from "gsap";
 import { winkGame } from "../integrations/wink/wink-adapter.js";
 
-const BUTTON_THEMES = {
-  green: { top: "#7BBF82", bottom: "#469A5C", shadow: "#2F7146" },
-  orange: { top: "#FF9B65", bottom: "#E76F43", shadow: "#B54731" },
-  blue: { top: "#78C7E8", bottom: "#368FBE", shadow: "#276A91" },
-  red: { top: "#EE7A73", bottom: "#D6534F", shadow: "#A43B3A" },
-  yellow: { top: "#F4D35E", bottom: "#E2A93B", shadow: "#AD6B22" },
-};
+const BUTTON_THEMES = Object.freeze({
+  green: { top: "#79AD79", bottom: "#4F8D62", shadow: "#376345" },
+  orange: { top: "#E88958", bottom: "#CD663F", shadow: "#8F3E2B" },
+  blue: { top: "#72B7D1", bottom: "#3D8EB3", shadow: "#2C6682" },
+  red: { top: "#D66F6B", bottom: "#B9504F", shadow: "#823838" },
+  yellow: { top: "#EEDC9A", bottom: "#D9B95F", shadow: "#A96C32" },
+});
 
-const BUTTON_HIGHLIGHT = "#FFF8E7";
-const MAIN_MENU_BACKGROUND_PATH = "/assest/image/bg_zigzag_village.png";
-const MAIN_MENU_BACKGROUND_ASPECT = 1778 / 884;
+const BUTTON_BORDER = "#FFF1D2";
+const BUTTON_INK = "#FFF8E8";
+const UI_FONT_FAMILY = '"Be Vietnam Pro", sans-serif';
+const TITLE_FONT_FAMILY = '"Baloo 2", "Be Vietnam Pro", sans-serif';
 
 function getButtonTheme(theme) {
   return BUTTON_THEMES[theme] || BUTTON_THEMES.yellow;
@@ -32,7 +33,7 @@ function getEffectiveUser() {
   if (winkGame && winkGame.isAuthenticated) {
     return {
       name: "Thành viên",
-      avatar: "/assest/image/imagenobackgrd/001_avatar_laclac.png",
+      avatar: "/assest/image/imagebldp/001_avatar_laclac.png",
     };
   }
   return null;
@@ -59,14 +60,6 @@ export class UIManager {
     this.onToggleSfx = null;
     this.onPlayClick = null;
 
-    // The menu backdrop lives outside activeGroup so opening a popup does not
-    // dispose it and expose the plain world clear color behind the modal.
-    this.menuBackgroundGroup = new THREE.Group();
-    this.menuBackgroundGroup.visible = false;
-    this.scene.add(this.menuBackgroundGroup);
-    this.menuBackgroundSprite = null;
-    this.menuBackgroundVeil = null;
-
     this.activeGroup = new THREE.Group();
     this.scene.add(this.activeGroup);
 
@@ -74,10 +67,6 @@ export class UIManager {
     this.scene.add(this.hudGroup);
 
     this.scoreSprite = null;
-    this.canvasDisplayFont =
-      document.documentElement.dataset.gameDisplayFont === "baloo"
-        ? '"Baloo 2", "Be Vietnam Pro", sans-serif'
-        : '"Segoe UI", Arial, sans-serif';
 
     domElement.addEventListener("pointermove", this.onPointerMove.bind(this));
     domElement.addEventListener("pointerdown", this.onPointerDown.bind(this));
@@ -175,8 +164,6 @@ export class UIManager {
   }
 
   clear() {
-    this.setMainMenuBackgroundVisible(false);
-
     // Clear HTML popups
     const settings = document.getElementById("game-settings-overlay-id");
     if (settings) settings.remove();
@@ -200,63 +187,6 @@ export class UIManager {
       this.hudGroup.remove(child);
     }
     this.interactiveObjects = [];
-  }
-
-  setMainMenuBackgroundVisible(visible) {
-    if (!visible) {
-      this.menuBackgroundGroup.visible = false;
-      return;
-    }
-
-    if (!this.menuBackgroundSprite) {
-      const backgroundTexture = new THREE.TextureLoader().load(
-        MAIN_MENU_BACKGROUND_PATH,
-      );
-      backgroundTexture.colorSpace = THREE.SRGBColorSpace;
-      backgroundTexture.minFilter = THREE.LinearMipmapLinearFilter;
-      backgroundTexture.magFilter = THREE.LinearFilter;
-
-      this.menuBackgroundSprite = new THREE.Sprite(
-        new THREE.SpriteMaterial({
-          map: backgroundTexture,
-          color: 0xa8b7a8,
-          depthTest: false,
-          depthWrite: false,
-        }),
-      );
-      this.menuBackgroundSprite.position.set(0, 0, -2);
-      this.menuBackgroundSprite.renderOrder = -20;
-      this.menuBackgroundGroup.add(this.menuBackgroundSprite);
-
-      this.menuBackgroundVeil = new THREE.Sprite(
-        new THREE.SpriteMaterial({
-          color: 0x0b1d10,
-          transparent: true,
-          opacity: 0.38,
-          depthTest: false,
-          depthWrite: false,
-        }),
-      );
-      this.menuBackgroundVeil.position.set(0, 0, -1.9);
-      this.menuBackgroundVeil.renderOrder = -19;
-      this.menuBackgroundGroup.add(this.menuBackgroundVeil);
-    }
-
-    const screenW = window.innerWidth;
-    const screenH = window.innerHeight;
-    const viewportAspect = screenW / screenH;
-    const backgroundWidth =
-      viewportAspect > MAIN_MENU_BACKGROUND_ASPECT
-        ? screenW
-        : screenH * MAIN_MENU_BACKGROUND_ASPECT;
-    const backgroundHeight =
-      viewportAspect > MAIN_MENU_BACKGROUND_ASPECT
-        ? screenW / MAIN_MENU_BACKGROUND_ASPECT
-        : screenH;
-
-    this.menuBackgroundSprite.scale.set(backgroundWidth, backgroundHeight, 1);
-    this.menuBackgroundVeil.scale.set(screenW, screenH, 1);
-    this.menuBackgroundGroup.visible = true;
   }
 
   createTextureFromCanvas(drawCallback, width, height) {
@@ -314,12 +244,12 @@ export class UIManager {
         ctx.roundRect(0, 0, w, h, radius);
         ctx.fill();
 
-        ctx.strokeStyle = BUTTON_HIGHLIGHT;
+        ctx.strokeStyle = BUTTON_BORDER;
         ctx.lineWidth = strokeWidth;
         ctx.stroke();
 
         // Text with Stroke
-        ctx.font = `900 ${Math.max(16, radius * 0.9)}px ${this.canvasDisplayFont}`;
+        ctx.font = `900 ${Math.max(16, radius * 0.9)}px ${UI_FONT_FAMILY}`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
 
@@ -328,7 +258,7 @@ export class UIManager {
         ctx.lineJoin = "round";
         ctx.strokeText(text, w / 2, h / 2);
 
-        ctx.fillStyle = BUTTON_HIGHLIGHT;
+        ctx.fillStyle = BUTTON_INK;
         ctx.fillText(text, w / 2, h / 2);
       },
       canvasW,
@@ -395,7 +325,7 @@ export class UIManager {
     ctx.arc(radius, radius, radius, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.strokeStyle = BUTTON_HIGHLIGHT;
+    ctx.strokeStyle = BUTTON_BORDER;
     ctx.lineWidth = strokeWidth;
     ctx.stroke();
 
@@ -420,17 +350,17 @@ export class UIManager {
       const iconScale = (w * 0.6) / 24;
       ctx.scale(iconScale, iconScale);
       ctx.translate(-12, -12);
-      ctx.fillStyle = BUTTON_HIGHLIGHT;
+      ctx.fillStyle = BUTTON_INK;
       ctx.fill(p);
       ctx.restore();
     } else if (iconNameStr === "x2") {
-      ctx.font = '900 32px "Segoe UI", Arial';
-      ctx.fillStyle = BUTTON_HIGHLIGHT;
+      ctx.font = `900 32px ${UI_FONT_FAMILY}`;
+      ctx.fillStyle = BUTTON_INK;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText("x2", radius, radius);
     } else {
-      ctx.fillStyle = BUTTON_HIGHLIGHT;
+      ctx.fillStyle = "#ffffff";
       ctx.beginPath();
       ctx.arc(radius, radius, radius * 0.3, 0, Math.PI * 2);
       ctx.fill();
@@ -472,7 +402,7 @@ export class UIManager {
         ctx.arc(radius, radius, radius, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.strokeStyle = BUTTON_HIGHLIGHT;
+        ctx.strokeStyle = BUTTON_BORDER;
         ctx.lineWidth = strokeWidth;
         ctx.stroke();
 
@@ -497,11 +427,11 @@ export class UIManager {
           const iconScale = (w * 0.6) / 24;
           ctx.scale(iconScale, iconScale);
           ctx.translate(-12, -12);
-          ctx.fillStyle = BUTTON_HIGHLIGHT;
+          ctx.fillStyle = BUTTON_INK;
           ctx.fill(p);
           ctx.restore();
         } else {
-          ctx.fillStyle = BUTTON_HIGHLIGHT;
+          ctx.fillStyle = BUTTON_INK;
           ctx.beginPath();
           ctx.arc(radius, radius, radius * 0.3, 0, Math.PI * 2);
           ctx.fill();
@@ -660,7 +590,7 @@ export class UIManager {
         ctx.lineWidth = 2.5;
         ctx.stroke(); // Stroke
 
-        ctx.font = '900 22px "Segoe UI", Arial, sans-serif';
+        ctx.font = `900 22px ${UI_FONT_FAMILY}`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
 
@@ -680,11 +610,8 @@ export class UIManager {
 
   showMainMenu(stats) {
     this.clear();
-    this.setMainMenuBackgroundVisible(true);
     const highScore =
       stats && stats.highScore !== undefined ? stats.highScore : 0;
-
-    const screenW = window.innerWidth;
 
     const titleTex = this.createTextureFromCanvas(
       (ctx, w) => {
@@ -693,7 +620,7 @@ export class UIManager {
         titleGrad.addColorStop(1, "#FBC02D");
 
         // Logo Title
-        ctx.font = '900 60px "Segoe UI", Arial, sans-serif';
+        ctx.font = `800 60px ${TITLE_FONT_FAMILY}`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.lineJoin = "round";
@@ -706,7 +633,7 @@ export class UIManager {
         ctx.fillText("HÀNH TRÌNH", w / 2, 50);
 
         // --- Line 2: ZIGZAG ---
-        ctx.font = '900 84px "Segoe UI", Arial, sans-serif';
+        ctx.font = `800 84px ${TITLE_FONT_FAMILY}`;
         ctx.lineWidth = 18;
         ctx.strokeStyle = "#F57F17";
         ctx.strokeText("ZIGZAG", w / 2, 135);
@@ -715,7 +642,7 @@ export class UIManager {
         ctx.fillText("ZIGZAG", w / 2, 135);
 
         // --- Subtitle ---
-        ctx.font = '900 45px "Segoe UI", Arial, sans-serif';
+        ctx.font = `900 45px ${UI_FONT_FAMILY}`;
         ctx.lineWidth = 10;
         ctx.strokeStyle = "#000000";
         ctx.strokeText("VÔ CỰC", w / 2, 205);
@@ -732,7 +659,7 @@ export class UIManager {
         ctx.stroke();
 
         // Highscore
-        ctx.font = '900 28px "Segoe UI", Arial, sans-serif';
+        ctx.font = `900 28px ${UI_FONT_FAMILY}`;
         ctx.lineWidth = 5;
         ctx.strokeStyle = "#F57F17";
         ctx.strokeText("🏆 KỶ LỤC ĐIỂM: " + highScore, w / 2, 290);
@@ -747,6 +674,7 @@ export class UIManager {
     );
 
     // Scale dynamically based on screen width to fit all devices
+    const screenW = window.innerWidth;
     let scaleW = 600;
     let scaleH = 350;
     if (screenW < 600) {
@@ -765,7 +693,7 @@ export class UIManager {
       () => {
         if (this.onPlay) this.onPlay();
       },
-      "orange",
+      "yellow",
     );
     playBtn.position.set(0, -60, 0);
     this.activeGroup.add(playBtn);
@@ -775,7 +703,7 @@ export class UIManager {
       () => {
         if (this.onAchievements) this.onAchievements();
       },
-      62,
+      70,
       "yellow",
     );
     trophyBtn.position.set(-80, -180, 0);
@@ -786,8 +714,8 @@ export class UIManager {
       () => {
         if (this.onSettings) this.onSettings();
       },
-      62,
-      "blue",
+      70,
+      "yellow",
     );
     settingsBtn.position.set(80, -180, 0);
     this.activeGroup.add(settingsBtn);
@@ -795,7 +723,6 @@ export class UIManager {
 
   showSettings(isIngame = false) {
     this.clear();
-    this.setMainMenuBackgroundVisible(!isIngame);
     this.injectHTMLPopupStyles();
 
     const existing = document.getElementById("game-settings-overlay-id");
@@ -837,7 +764,7 @@ export class UIManager {
       row.style.cssText = `width:100%; height:70px; border-radius:12px; background:#fbfaf5; border:3px solid #fff; display:flex; justify-content:space-between; align-items:center; padding:0 20px; box-sizing:border-box; margin-bottom: 15px;`;
 
       const text = document.createElement("span");
-      text.style.cssText = `font-family:'Fredoka', 'Baloo 2', 'Be Vietnam Pro', sans-serif; font-size:18px; font-weight:bold; color:#47363B; letter-spacing:0.8px; white-space:nowrap;`;
+      text.style.cssText = `font-family:'Be Vietnam Pro', sans-serif; font-size:18px; font-weight:800; color:#47363B; letter-spacing:0.8px; white-space:nowrap;`;
       text.innerText = label;
 
       const toggle = document.createElement("div");
@@ -846,7 +773,7 @@ export class UIManager {
 
       const statusText = document.createElement("span");
       statusText.innerText = isMuted ? "OFF" : "ON";
-      statusText.style.cssText = `color:#fff; font-family:'Impact', 'Arial Black', sans-serif; font-size:18px; position:absolute; width:100%; text-align:center; padding-right:${isMuted ? "0" : "32px"}; padding-left:${isMuted ? "32px" : "0"}; box-sizing:border-box; transition: padding 0.25s; text-shadow: 0 2px 3px rgba(0,0,0,0.4); pointer-events:none;`;
+      statusText.style.cssText = `color:#fff; font-family:'Be Vietnam Pro', sans-serif; font-size:18px; font-weight:900; position:absolute; width:100%; text-align:center; padding-right:${isMuted ? "0" : "32px"}; padding-left:${isMuted ? "32px" : "0"}; box-sizing:border-box; transition: padding 0.25s; text-shadow: 0 2px 3px rgba(0,0,0,0.4); pointer-events:none;`;
 
       const knob = document.createElement("div");
       knob.style.cssText = `width:36px; height:36px; border-radius:50%; background:#fff; position:absolute; top:2px; left:${isMuted ? "3px" : "51px"}; transition: left 0.25s cubic-bezier(0.3, 1.2, 0.5, 1); box-shadow: 0 3px 6px rgba(0,0,0,0.4); pointer-events:none;`;
@@ -903,7 +830,7 @@ export class UIManager {
       // Home
       const homeBtn = document.createElement("button");
       homeBtn.className = "game-paused-btn";
-      homeBtn.style.backgroundImage = `url(${this.getIconBase64("home", "blue")})`;
+      homeBtn.style.backgroundImage = `url(${this.getIconBase64("home")})`;
       homeBtn.addEventListener("click", () => {
         this.playClickSound();
         overlay.remove();
@@ -915,7 +842,7 @@ export class UIManager {
       // Replay
       const replayBtn = document.createElement("button");
       replayBtn.className = "game-paused-btn";
-      replayBtn.style.backgroundImage = `url(${this.getIconBase64("replay", "yellow")})`;
+      replayBtn.style.backgroundImage = `url(${this.getIconBase64("replay")})`;
       replayBtn.addEventListener("click", () => {
         this.playClickSound();
         overlay.remove();
@@ -926,7 +853,7 @@ export class UIManager {
       // Continue
       const continueBtn = document.createElement("button");
       continueBtn.className = "game-paused-btn";
-      continueBtn.style.backgroundImage = `url(${this.getIconBase64("play", "green")})`;
+      continueBtn.style.backgroundImage = `url(${this.getIconBase64("play")})`;
       continueBtn.addEventListener("click", () => {
         this.playClickSound();
         overlay.remove();
@@ -1019,7 +946,7 @@ export class UIManager {
     if (canDoubleReward) {
       const x2Btn = document.createElement("button");
       x2Btn.className = "game-paused-btn";
-      x2Btn.style.backgroundImage = `url(${this.getIconBase64("x2", "orange")})`;
+      x2Btn.style.backgroundImage = `url(${this.getIconBase64("x2")})`;
       x2Btn.addEventListener("click", () => {
         this.playClickSound();
         overlay.remove();
@@ -1031,7 +958,7 @@ export class UIManager {
     // Replay
     const replayBtn = document.createElement("button");
     replayBtn.className = "game-paused-btn";
-    replayBtn.style.backgroundImage = `url(${this.getIconBase64("replay", "yellow")})`;
+    replayBtn.style.backgroundImage = `url(${this.getIconBase64("replay")})`;
     replayBtn.addEventListener("click", () => {
       this.playClickSound();
       overlay.remove();
@@ -1042,7 +969,7 @@ export class UIManager {
     // Home
     const homeBtn = document.createElement("button");
     homeBtn.className = "game-paused-btn";
-    homeBtn.style.backgroundImage = `url(${this.getIconBase64("home", "blue")})`;
+    homeBtn.style.backgroundImage = `url(${this.getIconBase64("home")})`;
     homeBtn.addEventListener("click", () => {
       this.playClickSound();
       overlay.remove();
@@ -1124,19 +1051,19 @@ export class UIManager {
     btnContainer.style.gap = "15px";
 
     const yesBtn = document.createElement("button");
-    yesBtn.style.background = "linear-gradient(to bottom, #FF9B65, #E76F43)";
+    yesBtn.style.background = "linear-gradient(to bottom, #FFF176, #FBC02D)";
     yesBtn.style.border = "none";
     yesBtn.style.borderRadius = "12px";
     yesBtn.style.padding = "10px 60px";
-    yesBtn.style.color = BUTTON_HIGHLIGHT;
+    yesBtn.style.color = "#47363B";
     yesBtn.style.fontSize = "26px";
     yesBtn.style.fontWeight = "900";
-    yesBtn.style.fontFamily = '"Segoe UI", Arial, sans-serif';
+    yesBtn.style.fontFamily = "Be Vietnam Pro, sans-serif";
     yesBtn.style.cursor = "pointer";
     yesBtn.style.display = "flex";
     yesBtn.style.alignItems = "center";
     yesBtn.style.justifyContent = "center";
-    yesBtn.style.boxShadow = "0 6px 0 #B54731, 0 8px 10px rgba(71,41,34,0.24)";
+    yesBtn.style.boxShadow = "0 6px 0 #F57F17, 0 8px 10px rgba(0,0,0,0.3)";
     yesBtn.style.transition = "transform 0.1s, box-shadow 0.1s";
 
     // Add video icon
@@ -1155,17 +1082,15 @@ export class UIManager {
     // Click effect for yesBtn
     yesBtn.addEventListener("mousedown", () => {
       yesBtn.style.transform = "translateY(6px)";
-      yesBtn.style.boxShadow = "0 0 0 #B54731, 0 2px 5px rgba(71,41,34,0.24)";
+      yesBtn.style.boxShadow = "0 0px 0 #F57F17, 0 2px 5px rgba(0,0,0,0.3)";
     });
     yesBtn.addEventListener("mouseup", () => {
       yesBtn.style.transform = "translateY(0)";
-      yesBtn.style.boxShadow =
-        "0 6px 0 #B54731, 0 8px 10px rgba(71,41,34,0.24)";
+      yesBtn.style.boxShadow = "0 6px 0 #F57F17, 0 8px 10px rgba(0,0,0,0.3)";
     });
     yesBtn.addEventListener("mouseleave", () => {
       yesBtn.style.transform = "translateY(0)";
-      yesBtn.style.boxShadow =
-        "0 6px 0 #B54731, 0 8px 10px rgba(71,41,34,0.24)";
+      yesBtn.style.boxShadow = "0 6px 0 #F57F17, 0 8px 10px rgba(0,0,0,0.3)";
     });
 
     yesBtn.addEventListener("click", () => {
@@ -1209,7 +1134,7 @@ export class UIManager {
     const createTextSprite = (text) => {
       const tex = this.createTextureFromCanvas(
         (ctx, w, h) => {
-          ctx.font = '900 28px "Segoe UI", Arial, sans-serif';
+          ctx.font = `900 28px ${UI_FONT_FAMILY}`;
           ctx.textAlign = "left";
           ctx.textBaseline = "middle";
           ctx.lineWidth = 4;
@@ -1240,12 +1165,12 @@ export class UIManager {
       () => {
         if (this.onSettings) this.onSettings();
       },
-      44,
-      "blue",
+      50,
+      "yellow",
     );
     settingsBtn.position.set(
-      window.innerWidth / 2 - 42,
-      window.innerHeight / 2 - 42,
+      window.innerWidth / 2 - 50,
+      window.innerHeight / 2 - 50,
       0,
     );
     this.hudGroup.add(settingsBtn);
@@ -1253,7 +1178,7 @@ export class UIManager {
     // Tutorial Text (Center Screen)
     const tutTex = this.createTextureFromCanvas(
       (ctx, w, h) => {
-        ctx.font = '900 26px "Segoe UI", Arial, sans-serif';
+        ctx.font = `900 26px ${UI_FONT_FAMILY}`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
 
@@ -1303,7 +1228,7 @@ export class UIManager {
     const createTextSprite = (text) => {
       const tex = this.createTextureFromCanvas(
         (ctx, w, h) => {
-          ctx.font = '900 28px "Segoe UI", Arial, sans-serif';
+          ctx.font = `900 28px ${UI_FONT_FAMILY}`;
           ctx.textAlign = "left";
           ctx.textBaseline = "middle";
           ctx.lineWidth = 4;
@@ -1332,7 +1257,6 @@ export class UIManager {
 
   showAchievements(stats) {
     this.clear();
-    this.setMainMenuBackgroundVisible(true);
     this.injectHTMLPopupStyles();
 
     const existing = document.getElementById("game-achievements-overlay-id");
@@ -1490,7 +1414,7 @@ export class UIManager {
           position: relative;
           transform: scale(0.85);
           transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.25s ease;
-          font-family: 'Be Vietnam Pro', sans-serif;
+          font-family:'Be Vietnam Pro', sans-serif;
           box-sizing: border-box;
           opacity: 0;
         }
@@ -1507,7 +1431,7 @@ export class UIManager {
           border-radius: 12px;
           box-shadow: 0 4px 0 #F57F17;
           color: #47363B;
-          font-family: 'Be Vietnam Pro', sans-serif;
+          font-family:'Be Vietnam Pro', sans-serif;
           font-size: 20px;
           font-weight: 800;
           letter-spacing: 1.5px;
@@ -1554,7 +1478,7 @@ export class UIManager {
           height: 62px;
         }
         .game-settings-label {
-          font-family: 'Be Vietnam Pro', sans-serif;
+          font-family:'Be Vietnam Pro', sans-serif;
           font-size: 18px;
           font-weight: 700;
           color: #47363B;
@@ -1580,19 +1504,19 @@ export class UIManager {
           transform: scale(0.95);
         }
         .game-settings-reset-btn {
-          background: linear-gradient(180deg, #EE7A73 0%, #D6534F 100%);
+          background: linear-gradient(180deg, #FFF176 0%, #FBC02D 100%);
           border: none;
-          box-shadow: 0 4px 0 #A43B3A;
+          box-shadow: 0 4px 0 #F57F17;
           border-radius: 12px;
-          color: #FFF8E7;
-          font-family: 'Be Vietnam Pro', sans-serif;
+          color: #47363B;
+          font-family:'Be Vietnam Pro', sans-serif;
           font-size: 14px;
           font-weight: 800;
           padding: 10px 20px;
           cursor: pointer;
           margin-top: 20px;
           transition: transform 0.1s ease, filter 0.1s ease;
-          text-shadow: 0 1px 2px rgba(78, 35, 33, 0.22);
+          text-shadow: 0 1px 2px rgba(0,0,0,0.4);
           display: inline-flex;
           align-items: center;
           justify-content: center;
@@ -1604,11 +1528,12 @@ export class UIManager {
           object-fit: contain;
         }
         .game-settings-reset-btn:hover {
-          transform: translateY(-1px);
+          transform: scale(1.05);
+          filter: brightness(1.05);
         }
         .game-settings-reset-btn:active {
           transform: translateY(2px);
-          box-shadow: 0 2px 0 #A43B3A;
+          box-shadow: 0 2px 0 #F57F17;
         }
 
         /* Paused popup */
@@ -1639,7 +1564,7 @@ export class UIManager {
 
         /* Achievements popup */
         .game-achievements-user-text {
-          font-family: 'Be Vietnam Pro', sans-serif;
+          font-family:'Be Vietnam Pro', sans-serif;
           font-size: 13px;
           font-weight: 700;
           color: #1B5E20;
@@ -1668,7 +1593,7 @@ export class UIManager {
           transform: scale(1.2);
         }
         .game-achievements-level-name {
-          font-family: 'Be Vietnam Pro', sans-serif;
+          font-family:'Be Vietnam Pro', sans-serif;
           font-size: 22px;
           font-weight: 800;
           color: #2E7D32;
@@ -1679,7 +1604,7 @@ export class UIManager {
           width: 100%;
           margin-top: 16px;
           border-collapse: collapse;
-          font-family: 'Be Vietnam Pro', sans-serif;
+          font-family:'Be Vietnam Pro', sans-serif;
         }
         .game-achievements-table th {
           position: sticky;
@@ -1750,7 +1675,7 @@ export class UIManager {
           justify-content: space-between;
           height: 48px;
           box-sizing: border-box;
-          font-family: 'Be Vietnam Pro', sans-serif;
+          font-family:'Be Vietnam Pro', sans-serif;
         }
         .game-achievements-footer-item {
           font-size: 13px;

@@ -30,24 +30,67 @@ export class LevelBuilder {
     );
 
     // Top surface texture
-    const roadTex = textureLoader.load("/assest/image/road_village_tile.webp");
+    const roadTex = textureLoader.load(
+      "/assest/image/Ref-20260630T071202Z-3-001/Ref/Environment/matnen.png",
+    );
     roadTex.colorSpace = THREE.SRGBColorSpace;
     roadTex.wrapS = THREE.RepeatWrapping;
     roadTex.wrapT = THREE.RepeatWrapping;
-    roadTex.repeat.set(1, 1);
+    roadTex.repeat.set(5, 5);
+
+    // Side surface texture
+    const wallTex = textureLoader.load(
+      "/assest/image/Ref-20260630T071202Z-3-001/Ref/Environment/gach.png",
+    );
+    wallTex.colorSpace = THREE.SRGBColorSpace;
+    wallTex.wrapS = THREE.RepeatWrapping;
+    wallTex.wrapT = THREE.RepeatWrapping;
+    wallTex.repeat.set(5, 1);
 
     const cloudTex = textureLoader.load(
       "/assest/image/Ref-20260630T071202Z-3-001/Ref/Character/cloudball.png",
     );
     cloudTex.colorSpace = THREE.SRGBColorSpace;
 
+    const tex1 = textureLoader.load("/assest/image/vietnam_tribe_scenery.png");
+    const tex2 = textureLoader.load("/assest/image/vietnam_tribe_hoian.png");
+    const tex3 = textureLoader.load("/assest/image/vietnam_tribe_beach.png");
+    const tex4 = textureLoader.load("/assest/image/vietnam_tribe_sapa.png");
+
+    this.sceneryTextures = [tex1, tex2, tex3, tex4];
+    this.sceneryTextures.forEach((t) => {
+      t.colorSpace = THREE.SRGBColorSpace;
+      // Do not tile, stretch over the massive plane
+    });
+
     this.materials = {
-      // A single material turns each road tile from six draw calls into one.
-      wall: new THREE.MeshLambertMaterial({
-        map: roadTex,
-        color: 0xffffff,
+      wall: [
+        new THREE.MeshLambertMaterial({
+          map: wallTex,
+          color: 0xdddddd,
+        }),
+        new THREE.MeshLambertMaterial({
+          map: wallTex,
+          color: 0xdddddd,
+        }),
+        new THREE.MeshLambertMaterial({ map: roadTex }),
+        new THREE.MeshLambertMaterial({
+          map: wallTex,
+          color: 0xdddddd,
+        }),
+        new THREE.MeshLambertMaterial({
+          map: wallTex,
+          color: 0xdddddd,
+        }),
+        new THREE.MeshLambertMaterial({
+          map: wallTex,
+          color: 0xdddddd,
+        }),
+      ],
+      wallDark: new THREE.MeshLambertMaterial({
+        map: wallTex,
+        color: 0x999999,
       }),
-      roadShoulder: new THREE.MeshBasicMaterial({ color: 0x5c4229 }),
       coinMesh: new THREE.MeshLambertMaterial({
         map: coinTex,
       }),
@@ -60,14 +103,14 @@ export class LevelBuilder {
     };
 
     this.geometries = {
-      box: new THREE.BoxGeometry(TILE_SIZE, 0.28, TILE_SIZE),
-      shoulder: new THREE.BoxGeometry(TILE_SIZE + 0.5, 0.08, TILE_SIZE + 0.5),
+      box: new THREE.BoxGeometry(TILE_SIZE, 1, TILE_SIZE),
     };
 
     this.lastX = 0;
     this.lastZ = 0;
     this.path = [];
     this.regions = [];
+    this.sceneryIndex = 0;
 
     this.buildLevel();
   }
@@ -96,6 +139,7 @@ export class LevelBuilder {
     this.path = [];
     this.lastX = 0;
     this.lastZ = 0;
+    this.sceneryIndex = 0;
   }
 
   createBounds(x, z, width, depth) {
@@ -107,11 +151,29 @@ export class LevelBuilder {
     };
   }
 
+  spawnRegion(x, z) {
+    // Spawn a large 250x250 plane centered roughly ahead of the road
+    const texture =
+      this.sceneryTextures[this.sceneryIndex % this.sceneryTextures.length];
+    const mesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(300, 300),
+      new THREE.MeshBasicMaterial({ map: texture, color: 0xdddddd }),
+    );
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.position.set(x, -40, z);
+    this.scene.add(mesh);
+    this.regions.push(mesh);
+    this.sceneryIndex++;
+  }
+
   buildLevel() {
     this.clear();
     this.path = [];
     let startX = 0;
     let startZ = 0;
+
+    // Spawn the first starting region
+    this.spawnRegion(0, 100);
 
     for (let i = 0; i < 5; i++) {
       this.path.push({ x: startX, z: startZ });
@@ -149,6 +211,13 @@ export class LevelBuilder {
     this.path.push({ x: nextX, z: nextZ });
     this.lastX = nextX;
     this.lastZ = nextZ;
+
+    // Check if we need to spawn a new region based on distance
+    const distanceTraveled = Math.abs(nextX) + Math.abs(nextZ);
+    // 300 units is roughly 38 blocks of TILE_SIZE 8
+    if (distanceTraveled > this.sceneryIndex * 300) {
+      this.spawnRegion(nextX + 100, nextZ + 100);
+    }
   }
 
   straightenPath(solidMatch, direction, straightCount = 10) {
@@ -221,15 +290,6 @@ export class LevelBuilder {
     const mesh = new THREE.Mesh(this.geometries.box, this.materials.wall);
     mesh.castShadow = false;
     mesh.receiveShadow = false;
-
-    const shoulder = new THREE.Mesh(
-      this.geometries.shoulder,
-      this.materials.roadShoulder,
-    );
-    shoulder.position.y = -0.18;
-    shoulder.castShadow = false;
-    shoulder.receiveShadow = false;
-    mesh.add(shoulder);
     return mesh;
   }
 
@@ -251,9 +311,9 @@ export class LevelBuilder {
     const x = curr.x;
     const z = curr.z;
 
-    // A shallow path slab resting directly on the grass, with a dark soil edge.
+    // Surface block (thinner and positioned at y=-0.5 so top is at y=0)
     const mesh = this.getSolidMesh();
-    mesh.position.set(x, -0.14, z);
+    mesh.position.set(x, -0.5, z);
     this.scene.add(mesh);
     this.solids.push({
       mesh,
@@ -296,7 +356,7 @@ export class LevelBuilder {
     canvas.width = 128;
     canvas.height = 128;
     const ctx = canvas.getContext("2d");
-    ctx.font = "Bold 50px Arial";
+    ctx.font = '900 50px "Be Vietnam Pro", sans-serif';
     ctx.fillStyle = "#FFF59D"; // Gold matching theme
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
