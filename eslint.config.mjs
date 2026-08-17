@@ -12,6 +12,7 @@ export default [
       "public",
       "public/**",
       "**/wink-bridge.js",
+      "**/build-wink-warm.mjs",
       ".worktrees",
       ".worktrees/**",
     ],
