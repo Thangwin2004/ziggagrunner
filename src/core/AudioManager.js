@@ -140,6 +140,18 @@ export class AudioManager {
     // Disabled
   }
 
+  pauseForFocus() {
+    this.wasContextRunningBeforeFocus = this.ctx.state === "running";
+    if (this.wasContextRunningBeforeFocus) return this.ctx.suspend();
+    return Promise.resolve();
+  }
+
+  resumeFromFocus() {
+    if (!this.wasContextRunningBeforeFocus) return Promise.resolve();
+    this.wasContextRunningBeforeFocus = false;
+    return this.ctx.resume();
+  }
+
   playFall() {
     this.playSound("fall", false, 1.0);
   }

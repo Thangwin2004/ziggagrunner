@@ -1,4 +1,5 @@
 import { LevelBuilder } from "../world/LevelBuilder.js";
+import { EnvironmentManager } from "../world/EnvironmentManager.js";
 import { PhysicsSystem } from "../world/PhysicsSystem.js";
 import { Player } from "../entities/Player.js";
 import { UIManager } from "../ui/UIManager.js";
@@ -10,12 +11,13 @@ import { winkGame } from "../integrations/wink/wink-adapter.js";
 import gsap from "gsap";
 
 export class GameManager {
-  constructor(scene, camera, uiScene, uiCamera, domElement) {
+  constructor(scene, camera, uiScene, uiCamera, bgScene, bgCamera, domElement) {
     this.scene = scene;
     this.camera = camera;
 
     this.state = "MAIN_MENU";
 
+    this.environment = new EnvironmentManager(bgScene, bgCamera);
     this.levelBuilder = new LevelBuilder(scene);
     this.physics = new PhysicsSystem();
     this.player = new Player(scene);
@@ -39,6 +41,10 @@ export class GameManager {
     this.score = 0;
     this.coinsThisRun = 0;
     this.worldData = null;
+    this.fallCameraForwardX = 0;
+    this.fallCameraForwardZ = 1;
+    this.fallCameraOutwardX = 1;
+    this.fallCameraOutwardZ = 0;
 
     this.ui.onPlay = () => this.switchState("PLAYING");
     this.ui.onHome = () => this.switchState("MAIN_MENU");
@@ -173,7 +179,10 @@ export class GameManager {
     this.switchState("MAIN_MENU");
   }
 
-  resize() {
+  resize(w, h) {
+    if (this.environment && w && h) {
+      this.environment.resize(w, h);
+    }
     if (this.state === "MAIN_MENU") {
       this.ui.showMainMenu(getStats());
     } else if (this.state === "PLAYING") {
@@ -191,6 +200,7 @@ export class GameManager {
 
   switchState(newState) {
     this.state = newState;
+    this.environment.setMode(newState === "MAIN_MENU" ? "menu" : "gameplay");
     if (newState !== "PLAYING") {
       this.audio.stopRun();
     }
@@ -253,6 +263,35 @@ export class GameManager {
     this.worldData.onPlayerHit = () => {
       // Player falls
       if (this.state !== "GAME_OVER") {
+        const fallSpeed = Math.hypot(this.player.vx, this.player.vz) || 1;
+        this.fallCameraForwardX = this.player.vx / fallSpeed;
+        this.fallCameraForwardZ = this.player.vz / fallSpeed;
+
+        // Find which side of the road the character missed. The cinematic
+        // camera uses that outside direction so the road stays out of frame.
+        let nearestRoadX = this.player.x;
+        let nearestRoadZ = this.player.z;
+        let nearestRoadDistanceSq = Infinity;
+        for (const solid of this.levelBuilder.solids) {
+          const dx = this.player.x - solid.mesh.position.x;
+          const dz = this.player.z - solid.mesh.position.z;
+          const distanceSq = dx * dx + dz * dz;
+          if (distanceSq < nearestRoadDistanceSq) {
+            nearestRoadDistanceSq = distanceSq;
+            nearestRoadX = solid.mesh.position.x;
+            nearestRoadZ = solid.mesh.position.z;
+          }
+        }
+        const outwardX = this.player.x - nearestRoadX;
+        const outwardZ = this.player.z - nearestRoadZ;
+        const outwardLength = Math.hypot(outwardX, outwardZ);
+        if (outwardLength > 0.01) {
+          this.fallCameraOutwardX = outwardX / outwardLength;
+          this.fallCameraOutwardZ = outwardZ / outwardLength;
+        } else {
+          this.fallCameraOutwardX = -this.fallCameraForwardZ;
+          this.fallCameraOutwardZ = this.fallCameraForwardX;
+        }
         this.state = "GAME_OVER";
         this.audio.stopBGM();
         this.audio.stopRun();
@@ -348,6 +387,11 @@ export class GameManager {
     // Always update player animations (even during game over for death anim)
     this.player.update(deltaTime);
 
+    // Update parallax background
+    if (this.environment) {
+      this.environment.update(this.player);
+    }
+
     if (this.state === "PLAYING") {
       this.physics.update(deltaTime, this.player, this.worldData);
 
@@ -395,17 +439,30 @@ export class GameManager {
         this.player.z += this.player.vz;
         this.player.updateBounds();
 
-        // Cinematic camera following the falling character
-        const targetX = this.player.x - 20;
-        const targetY = Math.max(this.player.y + 20, 0); // Don't let camera go below 0 initially, but follow down
-        const targetZ = this.player.z - 20;
+        // Stay behind the running direction (the familiar player view) and
+        // shift outside the missed edge so the road cannot block the subject.
+        const fallTrail = 6;
+        const fallSide = 7;
+        const targetX =
+          this.player.x -
+          this.fallCameraForwardX * fallTrail +
+          this.fallCameraOutwardX * fallSide;
+        const targetY = this.player.y + 10;
+        const targetZ =
+          this.player.z -
+          this.fallCameraForwardZ * fallTrail +
+          this.fallCameraOutwardZ * fallSide;
+        const fallFollow = 1 - Math.exp(-10 * deltaTime);
 
-        this.camera.position.x += (targetX - this.camera.position.x) * 0.05;
-        this.camera.position.y += (targetY - this.camera.position.y) * 0.05;
-        this.camera.position.z += (targetZ - this.camera.position.z) * 0.05;
+        this.camera.position.x +=
+          (targetX - this.camera.position.x) * fallFollow;
+        this.camera.position.y +=
+          (targetY - this.camera.position.y) * fallFollow;
+        this.camera.position.z +=
+          (targetZ - this.camera.position.z) * fallFollow;
 
-        // Make camera look directly at the falling player
-        this.camera.lookAt(this.player.x, this.player.y, this.player.z);
+        // Focus near the torso so the character remains the visual anchor.
+        this.camera.lookAt(this.player.x, this.player.y + 1.2, this.player.z);
 
         this.player.mesh.position.x = this.player.x;
         this.player.mesh.position.y = this.player.y;

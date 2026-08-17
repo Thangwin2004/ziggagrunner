@@ -5,15 +5,17 @@ export function gameAlert(message) {
       style.id = "vibrant-modal-styles";
       style.textContent = `
         /* Duplicate some UIManager styles for standalone use if UIManager hasn't loaded yet */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.65); display: flex; justify-content: center; align-items: center; pointer-events: auto; z-index: 9999; animation: fadeIn 0.25s ease-out forwards; }
-        .modal-card-wrapper { background: linear-gradient(180deg, #CE93D8 0%, #AB47BC 100%); padding: 6px; border-radius: 20px; box-shadow: 0 6px 0 #7B1FA2, 0 15px 30px rgba(0,0,0,0.4); position: relative; transform: scale(0.85); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-        .modal-card { background: #F3E5F5; border-radius: 14px; border: 2.5px solid #AB47BC; padding: 45px 20px 20px 20px; width: 300px; text-align: center; position: relative; box-sizing: border-box; }
-        .modal-ribbon { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 220px; height: 42px; background: linear-gradient(180deg, #E1BEE7 0%, #AB47BC 100%); border: 2px solid #F3E5F5; border-radius: 10px; box-shadow: 0 4px 0 #7B1FA2, 0 4px 10px rgba(0,0,0,0.3); display: flex; justify-content: center; align-items: center; z-index: 5; }
-        .modal-ribbon.pink { background: linear-gradient(180deg, #E1BEE7 0%, #7B1FA2 100%); box-shadow: 0 4px 0 #4A148C, 0 4px 10px rgba(0,0,0,0.3); border-color: #F3E5F5; }
-        .modal-ribbon span { font-family:'Be Vietnam Pro', sans-serif; color: #ffffff; font-weight: 900; font-size: 17px; letter-spacing: 1px; text-shadow: 1.5px 1.5px 2px rgba(0,0,0,0.4); }
-        .msg-text { font-family:'Be Vietnam Pro', sans-serif; font-size: 18px; color: #4A148C; font-weight: 700; margin-bottom: 25px; line-height: 1.4; }
-        .icon-btn { width: 50px; height: 50px; cursor: pointer; transition: transform 0.1s; }
-        .icon-btn:hover { transform: scale(1.1); filter: brightness(1.1); }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(43,50,47,0.64); backdrop-filter: blur(6px); display: flex; justify-content: center; align-items: center; pointer-events: auto; z-index: 9999; animation: fadeIn 0.25s ease-out forwards; }
+        .modal-card-wrapper { background: #F1B76A; padding: 4px; border-radius: 20px; box-shadow: 0 6px 0 #CE482B, 0 15px 30px rgba(64,52,66,0.24); position: relative; transform: scale(0.95); animation: popIn 0.25s cubic-bezier(0.16,1,0.3,1) forwards; }
+        .modal-card { background: #FFF9F1; border-radius: 16px; border: 2px solid #FFF0D5; padding: 45px 20px 20px 20px; width: 300px; text-align: center; position: relative; box-sizing: border-box; }
+        .modal-ribbon { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 220px; height: 42px; background: linear-gradient(180deg, #FF9F5A 0%, #FF713D 100%); border: 2px solid #FFD3AD; border-radius: 12px; box-shadow: 0 4px 0 #CE482B, 0 4px 10px rgba(64,52,66,0.18); display: flex; justify-content: center; align-items: center; z-index: 5; }
+        .modal-ribbon.pink { background: linear-gradient(180deg, #FF9F5A 0%, #FF713D 100%); box-shadow: 0 4px 0 #CE482B, 0 4px 10px rgba(64,52,66,0.18); border-color: #FFD3AD; }
+        .modal-ribbon span { font-family:'Be Vietnam Pro', sans-serif; color: #FFFDF8; font-weight: 900; font-size: 17px; letter-spacing: 0.5px; text-shadow: 0 2px 0 rgba(139,55,35,0.3); }
+        .msg-text { font-family:'Be Vietnam Pro', sans-serif; font-size: 18px; color: #403442; font-weight: 700; margin-bottom: 25px; line-height: 1.4; }
+        .icon-btn { min-width: 56px; height: 50px; padding: 0 16px; border: none; border-radius: 12px; background: linear-gradient(180deg, #FF9F5A 0%, #FF713D 100%); box-shadow: 0 6px 0 #CE482B, 0 9px 16px rgba(64,52,66,0.18); color: #FFFDF8; font-family:'Be Vietnam Pro',sans-serif; font-size: 28px; font-weight: 800; line-height: 1; cursor: pointer; transition: transform 0.1s ease-out, box-shadow 0.1s ease-out, filter 0.1s ease-out; }
+        .icon-btn:hover { transform: translateY(-1px); filter: brightness(1.025); }
+        .icon-btn:active { transform: translateY(5px); box-shadow: 0 1px 0 #CE482B; }
+        .icon-btn:focus-visible { outline: 3px solid #8F3F2C; outline-offset: 3px; }
       `;
       document.head.appendChild(style);
     }
@@ -35,9 +37,10 @@ export function gameAlert(message) {
     msg.className = "msg-text";
     msg.innerText = message;
 
-    const okBtn = document.createElement("img");
+    const okBtn = document.createElement("button");
     okBtn.className = "icon-btn";
-    okBtn.src = "/assest/iconbtn/yes_btn.png";
+    okBtn.innerText = "✓";
+    okBtn.setAttribute("aria-label", "Đồng ý");
     okBtn.style.marginTop = "10px";
 
     okBtn.onclick = () => {
@@ -86,17 +89,19 @@ export function gameConfirm(message) {
     btnGroup.style.gap = "40px";
     btnGroup.style.marginTop = "10px";
 
-    const noBtn = document.createElement("img");
+    const noBtn = document.createElement("button");
     noBtn.className = "icon-btn";
-    noBtn.src = "/assest/iconbtn/close_btn.png";
+    noBtn.innerText = "×";
+    noBtn.setAttribute("aria-label", "Hủy");
     noBtn.onclick = () => {
       document.body.removeChild(overlay);
       resolve(false);
     };
 
-    const yesBtn = document.createElement("img");
+    const yesBtn = document.createElement("button");
     yesBtn.className = "icon-btn";
-    yesBtn.src = "/assest/iconbtn/yes_btn.png";
+    yesBtn.innerText = "✓";
+    yesBtn.setAttribute("aria-label", "Đồng ý");
     yesBtn.onclick = () => {
       document.body.removeChild(overlay);
       resolve(true);

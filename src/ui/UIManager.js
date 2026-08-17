@@ -2,21 +2,50 @@ import * as THREE from "three";
 import gsap from "gsap";
 import { winkGame } from "../integrations/wink/wink-adapter.js";
 
-const BUTTON_THEMES = Object.freeze({
-  green: { top: "#79AD79", bottom: "#4F8D62", shadow: "#376345" },
-  orange: { top: "#E88958", bottom: "#CD663F", shadow: "#8F3E2B" },
-  blue: { top: "#72B7D1", bottom: "#3D8EB3", shadow: "#2C6682" },
-  red: { top: "#D66F6B", bottom: "#B9504F", shadow: "#823838" },
-  yellow: { top: "#EEDC9A", bottom: "#D9B95F", shadow: "#A96C32" },
+const UI_PALETTE = Object.freeze({
+  primaryTop: "#FF9F5A",
+  primaryBottom: "#FF713D",
+  primaryShadow: "#CE482B",
+  primaryHighlight: "#FFC39A",
+  secondaryTop: "#FFF2C9",
+  secondaryBottom: "#FFE09B",
+  secondaryShadow: "#E7A23E",
+  surface: "#FFF9F1",
+  surfaceAlt: "#F7F0E7",
+  surfaceHighlight: "#FFF0D5",
+  ink: "#403442",
+  mutedInk: "#796C78",
+  controlInk: "#FFFDF8",
+  border: "#E6D2BF",
+  focus: "#8F3F2C",
 });
 
-const BUTTON_BORDER = "#FFF1D2";
-const BUTTON_INK = "#FFF8E8";
+const PRIMARY_BUTTON_THEME = Object.freeze({
+  top: UI_PALETTE.primaryTop,
+  bottom: UI_PALETTE.primaryBottom,
+  shadow: UI_PALETTE.primaryShadow,
+  ink: UI_PALETTE.controlInk,
+});
+
+const BUTTON_THEMES = Object.freeze({
+  primary: PRIMARY_BUTTON_THEME,
+  orange: PRIMARY_BUTTON_THEME,
+  green: PRIMARY_BUTTON_THEME,
+  blue: PRIMARY_BUTTON_THEME,
+  red: PRIMARY_BUTTON_THEME,
+  gold: PRIMARY_BUTTON_THEME,
+  yellow: PRIMARY_BUTTON_THEME,
+});
+
 const UI_FONT_FAMILY = '"Be Vietnam Pro", sans-serif';
 const TITLE_FONT_FAMILY = '"Baloo 2", "Be Vietnam Pro", sans-serif';
 
 function getButtonTheme(theme) {
-  return BUTTON_THEMES[theme] || BUTTON_THEMES.yellow;
+  return BUTTON_THEMES[theme] || BUTTON_THEMES.gold;
+}
+
+function createUIMaterial(map) {
+  return new THREE.SpriteMaterial({ map, toneMapped: false });
 }
 
 function getEffectiveUser() {
@@ -33,7 +62,7 @@ function getEffectiveUser() {
   if (winkGame && winkGame.isAuthenticated) {
     return {
       name: "Thành viên",
-      avatar: "/assest/image/imagebldp/001_avatar_laclac.png",
+      avatar: "/assest/image/imagebldp/001_avatar_laclac.webp",
     };
   }
   return null;
@@ -146,12 +175,10 @@ export class UIManager {
 
   makePopupResponsive(overlay, card) {
     const handleResize = () => {
-      const scale = Math.min(
-        1.0,
-        window.innerWidth / 450,
-        window.innerHeight / 650,
-      );
-      card.style.zoom = scale;
+      card.style.zoom = "1";
+      card.style.maxWidth = card.classList.contains("wide")
+        ? "min(440px, calc(100vw - 32px))"
+        : "min(380px, calc(100vw - 32px))";
     };
     window.addEventListener("resize", handleResize);
     handleResize();
@@ -207,14 +234,14 @@ export class UIManager {
 
   // --- Buttons ---
 
-  createWideButtonTexture(text, width = 240, height = 72, color = "yellow") {
-    const radius = height / 2;
-    const strokeWidth = Math.max(3, radius * 0.15);
-    const padX = strokeWidth + 2;
-    const padY = strokeWidth + 2;
+  createWideButtonTexture(text, width = 240, height = 72, color = "gold") {
+    const radius = Math.min(16, height * 0.24);
+    const shadowOffset = height * 0.1;
+    const padX = 2;
+    const padY = 2;
 
     const canvasW = width + padX * 2;
-    const canvasH = height + height * 0.15 + padY * 2;
+    const canvasH = height + shadowOffset + padY * 2;
 
     const texture = this.createTextureFromCanvas(
       (ctx) => {
@@ -222,6 +249,7 @@ export class UIManager {
           top: colorTop,
           bottom: colorBot,
           shadow: colorShadow,
+          ink: colorInk,
         } = getButtonTheme(color);
 
         ctx.translate(padX, padY);
@@ -231,12 +259,13 @@ export class UIManager {
         // 1. Solid Shadow
         ctx.fillStyle = colorShadow;
         ctx.beginPath();
-        ctx.roundRect(0, h * 0.15, w, h, radius);
+        ctx.roundRect(0, shadowOffset, w, h, radius);
         ctx.fill();
 
         // 2. Main Face Background
         const gradient = ctx.createLinearGradient(0, 0, 0, h);
         gradient.addColorStop(0, colorTop);
+        gradient.addColorStop(0.7, colorTop);
         gradient.addColorStop(1, colorBot);
 
         ctx.fillStyle = gradient;
@@ -244,29 +273,25 @@ export class UIManager {
         ctx.roundRect(0, 0, w, h, radius);
         ctx.fill();
 
-        ctx.strokeStyle = BUTTON_BORDER;
-        ctx.lineWidth = strokeWidth;
-        ctx.stroke();
-
-        // Text with Stroke
-        ctx.font = `900 ${Math.max(16, radius * 0.9)}px ${UI_FONT_FAMILY}`;
+        ctx.font = `800 ${Math.max(16, h * 0.42)}px ${UI_FONT_FAMILY}`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
 
-        ctx.lineWidth = 5;
-        ctx.strokeStyle = colorShadow;
-        ctx.lineJoin = "round";
-        ctx.strokeText(text, w / 2, h / 2);
-
-        ctx.fillStyle = BUTTON_INK;
+        ctx.shadowColor = colorShadow;
+        ctx.shadowBlur = 2;
+        ctx.shadowOffsetY = 2;
+        ctx.fillStyle = colorInk;
         ctx.fillText(text, w / 2, h / 2);
+        ctx.shadowColor = "transparent";
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
       },
       canvasW,
       canvasH,
     );
     return { texture, canvasW, canvasH };
   }
-  createWideButton(text, onClick, color = "yellow") {
+  createWideButton(text, onClick, color = "gold") {
     const w = 240;
     const h = 72;
     const { texture, canvasW, canvasH } = this.createWideButtonTexture(
@@ -275,7 +300,7 @@ export class UIManager {
       h,
       color,
     );
-    const material = new THREE.SpriteMaterial({ map: texture });
+    const material = createUIMaterial(texture);
     const sprite = new THREE.Sprite(material);
 
     sprite.scale.set(canvasW, canvasH, 1);
@@ -288,16 +313,18 @@ export class UIManager {
     return sprite;
   }
 
-  getIconBase64(iconName, theme = "yellow") {
+  getIconBase64(iconName, theme = "gold") {
     const scale = 60;
     const w = scale * 1.2;
     const h = scale * 1.2;
-    const radius = w / 2;
-    const strokeWidth = Math.max(3, radius * 0.15);
-    const pad = strokeWidth + 2;
+    const radius = 14;
+    const centerX = w / 2;
+    const centerY = h / 2;
+    const shadowOffset = h * 0.1;
+    const pad = 2;
 
     const canvasW = w + pad * 2;
-    const canvasH = h + h * 0.15 + pad * 2;
+    const canvasH = h + shadowOffset + pad * 2;
 
     const canvas = document.createElement("canvas");
     canvas.width = canvasW;
@@ -308,12 +335,13 @@ export class UIManager {
       top: colorTop,
       bottom: colorBot,
       shadow: colorShadow,
+      ink: colorInk,
     } = getButtonTheme(theme);
 
     ctx.translate(pad, pad);
     ctx.fillStyle = colorShadow;
     ctx.beginPath();
-    ctx.arc(radius, radius + radius * 0.15, radius, 0, Math.PI * 2);
+    ctx.roundRect(0, shadowOffset, w, h, radius);
     ctx.fill();
 
     const gradient = ctx.createLinearGradient(0, 0, 0, w);
@@ -322,12 +350,8 @@ export class UIManager {
 
     ctx.fillStyle = gradient;
     ctx.beginPath();
-    ctx.arc(radius, radius, radius, 0, Math.PI * 2);
+    ctx.roundRect(0, 0, w, h, radius);
     ctx.fill();
-
-    ctx.strokeStyle = BUTTON_BORDER;
-    ctx.lineWidth = strokeWidth;
-    ctx.stroke();
 
     const ICONS = {
       home: "M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z",
@@ -346,37 +370,45 @@ export class UIManager {
     if (ICONS[iconNameStr]) {
       const p = new window.Path2D(ICONS[iconNameStr]);
       ctx.save();
-      ctx.translate(radius, radius);
+      ctx.translate(centerX, centerY);
       const iconScale = (w * 0.6) / 24;
       ctx.scale(iconScale, iconScale);
       ctx.translate(-12, -12);
-      ctx.fillStyle = BUTTON_INK;
+      ctx.shadowColor = colorShadow;
+      ctx.shadowBlur = 1.5;
+      ctx.shadowOffsetY = 1.5;
+      ctx.fillStyle = colorInk;
       ctx.fill(p);
       ctx.restore();
     } else if (iconNameStr === "x2") {
       ctx.font = `900 32px ${UI_FONT_FAMILY}`;
-      ctx.fillStyle = BUTTON_INK;
+      ctx.fillStyle = colorInk;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText("x2", radius, radius);
+      ctx.shadowColor = colorShadow;
+      ctx.shadowBlur = 2;
+      ctx.shadowOffsetY = 2;
+      ctx.fillText("x2", centerX, centerY);
     } else {
-      ctx.fillStyle = "#ffffff";
+      ctx.fillStyle = colorInk;
       ctx.beginPath();
-      ctx.arc(radius, radius, radius * 0.3, 0, Math.PI * 2);
+      ctx.arc(centerX, centerY, w * 0.15, 0, Math.PI * 2);
       ctx.fill();
     }
     return canvas.toDataURL("image/png");
   }
 
-  createIconButton(iconName, onClick, scale = 60, theme = "blue") {
+  createIconButton(iconName, onClick, scale = 60, theme = "gold") {
     const w = scale * 1.2;
     const h = scale * 1.2;
-    const radius = w / 2;
-    const strokeWidth = Math.max(3, radius * 0.15);
-    const pad = strokeWidth + 2;
+    const radius = Math.max(12, scale * 0.23);
+    const centerX = w / 2;
+    const centerY = h / 2;
+    const shadowOffset = h * 0.1;
+    const pad = 2;
 
     const canvasW = w + pad * 2;
-    const canvasH = h + h * 0.15 + pad * 2;
+    const canvasH = h + shadowOffset + pad * 2;
 
     const texture = this.createTextureFromCanvas(
       (ctx) => {
@@ -384,13 +416,14 @@ export class UIManager {
           top: colorTop,
           bottom: colorBot,
           shadow: colorShadow,
+          ink: colorInk,
         } = getButtonTheme(theme);
 
         ctx.translate(pad, pad);
 
         ctx.fillStyle = colorShadow;
         ctx.beginPath();
-        ctx.arc(radius, radius + radius * 0.15, radius, 0, Math.PI * 2);
+        ctx.roundRect(0, shadowOffset, w, h, radius);
         ctx.fill();
 
         const gradient = ctx.createLinearGradient(0, 0, 0, w);
@@ -399,12 +432,8 @@ export class UIManager {
 
         ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.arc(radius, radius, radius, 0, Math.PI * 2);
+        ctx.roundRect(0, 0, w, h, radius);
         ctx.fill();
-
-        ctx.strokeStyle = BUTTON_BORDER;
-        ctx.lineWidth = strokeWidth;
-        ctx.stroke();
 
         const ICONS = {
           home: "M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z",
@@ -423,17 +452,20 @@ export class UIManager {
         if (ICONS[iconNameStr]) {
           const p = new window.Path2D(ICONS[iconNameStr]);
           ctx.save();
-          ctx.translate(radius, radius);
+          ctx.translate(centerX, centerY);
           const iconScale = (w * 0.6) / 24;
           ctx.scale(iconScale, iconScale);
           ctx.translate(-12, -12);
-          ctx.fillStyle = BUTTON_INK;
+          ctx.shadowColor = colorShadow;
+          ctx.shadowBlur = 1.5;
+          ctx.shadowOffsetY = 1.5;
+          ctx.fillStyle = colorInk;
           ctx.fill(p);
           ctx.restore();
         } else {
-          ctx.fillStyle = BUTTON_INK;
+          ctx.fillStyle = colorInk;
           ctx.beginPath();
-          ctx.arc(radius, radius, radius * 0.3, 0, Math.PI * 2);
+          ctx.arc(centerX, centerY, w * 0.15, 0, Math.PI * 2);
           ctx.fill();
         }
       },
@@ -441,7 +473,7 @@ export class UIManager {
       canvasH,
     );
 
-    const material = new THREE.SpriteMaterial({ map: texture });
+    const material = createUIMaterial(texture);
     const sprite = new THREE.Sprite(material);
 
     sprite.scale.set(canvasW, canvasH, 1);
@@ -458,16 +490,16 @@ export class UIManager {
       h = 40;
 
     const texOn = new THREE.TextureLoader().load(
-      "/assest/iconbtn/toggle_on.png",
+      "/assest/iconbtn/toggle_on.webp",
     );
     texOn.colorSpace = THREE.SRGBColorSpace;
 
     const texOff = new THREE.TextureLoader().load(
-      "/assest/iconbtn/toggle_off.png",
+      "/assest/iconbtn/toggle_off.webp",
     );
     texOff.colorSpace = THREE.SRGBColorSpace;
 
-    const mat = new THREE.SpriteMaterial({ map: isOn ? texOn : texOff });
+    const mat = createUIMaterial(isOn ? texOn : texOff);
     const sprite = new THREE.Sprite(mat);
     sprite.scale.set(w, h, 1);
     sprite.isOn = isOn;
@@ -493,9 +525,8 @@ export class UIManager {
     title,
     width = 340,
     height = 300,
-    ribbonColor = "blue",
     borderStyle = "white",
-    outerStrokeColor = "#7B1FA2",
+    outerStrokeColor = UI_PALETTE.border,
   ) {
     return this.createTextureFromCanvas(
       (ctx, w, h) => {
@@ -504,7 +535,7 @@ export class UIManager {
         const cardH = h - pad * 2;
 
         // Shadow
-        ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+        ctx.fillStyle = "rgba(64, 52, 66, 0.24)";
         ctx.beginPath();
         ctx.roundRect(pad + 6, pad + 12, cardW, cardH, 20);
         ctx.fill();
@@ -517,37 +548,36 @@ export class UIManager {
           ctx.fill();
 
           // Thick White Border
-          ctx.fillStyle = "#ffffff";
+          ctx.fillStyle = UI_PALETTE.surfaceHighlight;
           ctx.beginPath();
           ctx.roundRect(pad, pad, cardW, cardH, 20);
           ctx.fill();
 
           // Yellow Inner Stroke
-          ctx.strokeStyle = "#A5D6A7";
+          ctx.strokeStyle = UI_PALETTE.border;
           ctx.lineWidth = 3;
           ctx.beginPath();
           ctx.roundRect(pad + 6, pad + 6, cardW - 12, cardH - 12, 14);
           ctx.stroke();
 
           // Inner Card Face
-          ctx.fillStyle = "#F1F8E9";
+          ctx.fillStyle = UI_PALETTE.surface;
           ctx.beginPath();
           ctx.roundRect(pad + 8, pad + 8, cardW - 16, cardH - 16, 12);
           ctx.fill();
         } else {
-          // Dark Purple (Leaderboard style)
-          ctx.fillStyle = "#1B5E20";
+          ctx.fillStyle = UI_PALETTE.primaryShadow;
           ctx.beginPath();
           ctx.roundRect(pad, pad + 8, cardW, cardH, 20);
           ctx.fill();
-          ctx.fillStyle = "#2E7D32";
+          ctx.fillStyle = UI_PALETTE.primaryBottom;
           ctx.beginPath();
           ctx.roundRect(pad, pad, cardW, cardH, 20);
           ctx.fill();
-          ctx.strokeStyle = "#A5D6A7";
+          ctx.strokeStyle = UI_PALETTE.border;
           ctx.lineWidth = 3;
           ctx.stroke();
-          ctx.fillStyle = "#F1F8E9";
+          ctx.fillStyle = UI_PALETTE.surface;
           ctx.beginPath();
           ctx.roundRect(pad + 10, pad + 10, cardW - 20, cardH - 20, 15);
           ctx.fill();
@@ -565,18 +595,10 @@ export class UIManager {
           0,
           ribbonY + ribbonH,
         );
-        if (ribbonColor === "pink") {
-          rGrad.addColorStop(0, "#81C784");
-          rGrad.addColorStop(1, "#4CAF50");
-          ctx.fillStyle = "#2E7D32";
-          ctx.strokeStyle = "#F1F8E9";
-        } else {
-          // blue
-          rGrad.addColorStop(0, "#64B5F6");
-          rGrad.addColorStop(1, "#2196F3");
-          ctx.fillStyle = "#1565C0";
-          ctx.strokeStyle = "#ffffff";
-        }
+        rGrad.addColorStop(0, UI_PALETTE.primaryTop);
+        rGrad.addColorStop(1, UI_PALETTE.primaryBottom);
+        ctx.fillStyle = UI_PALETTE.primaryShadow;
+        ctx.strokeStyle = UI_PALETTE.surfaceHighlight;
 
         ctx.beginPath();
         ctx.roundRect(ribbonX, ribbonY + 6, ribbonW, ribbonH, 12);
@@ -590,18 +612,17 @@ export class UIManager {
         ctx.lineWidth = 2.5;
         ctx.stroke(); // Stroke
 
-        ctx.font = `900 22px ${UI_FONT_FAMILY}`;
+        ctx.font = `800 22px ${TITLE_FONT_FAMILY}`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-
-        // Shadow / Stroke
-        ctx.lineWidth = 5;
-        ctx.strokeStyle = "#000000";
-        ctx.lineJoin = "round";
-        ctx.strokeText(title, w / 2, ribbonY + ribbonH / 2 + 2);
-
-        ctx.fillStyle = "#ffffff";
+        ctx.shadowColor = "rgba(68, 39, 46, 0.28)";
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetY = 2;
+        ctx.fillStyle = UI_PALETTE.controlInk;
         ctx.fillText(title, w / 2, ribbonY + ribbonH / 2 + 2);
+        ctx.shadowColor = "transparent";
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
       },
       width + 60,
       height + 60,
@@ -615,63 +636,79 @@ export class UIManager {
 
     const titleTex = this.createTextureFromCanvas(
       (ctx, w) => {
-        const titleGrad = ctx.createLinearGradient(0, 0, 0, 150);
-        titleGrad.addColorStop(0, "#FFF176");
-        titleGrad.addColorStop(1, "#FBC02D");
-
-        // Logo Title
-        ctx.font = `800 60px ${TITLE_FONT_FAMILY}`;
+        // Secondary line: light, compact and clearly separate from the main name.
+        ctx.font = `800 43px ${TITLE_FONT_FAMILY}`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.lineJoin = "round";
+        ctx.shadowColor = "rgba(143, 63, 44, 0.52)";
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetY = 4;
+        ctx.fillStyle = UI_PALETTE.controlInk;
+        ctx.fillText("HÀNH TRÌNH", w / 2, 44);
 
-        ctx.lineWidth = 14;
-        ctx.strokeStyle = "#F57F17";
-        ctx.strokeText("HÀNH TRÌNH", w / 2, 50);
-
-        ctx.fillStyle = titleGrad;
-        ctx.fillText("HÀNH TRÌNH", w / 2, 50);
-
-        // --- Line 2: ZIGZAG ---
-        ctx.font = `800 84px ${TITLE_FONT_FAMILY}`;
-        ctx.lineWidth = 18;
-        ctx.strokeStyle = "#F57F17";
-        ctx.strokeText("ZIGZAG", w / 2, 135);
-
-        ctx.fillStyle = titleGrad;
-        ctx.fillText("ZIGZAG", w / 2, 135);
-
-        // --- Subtitle ---
-        ctx.font = `900 45px ${UI_FONT_FAMILY}`;
-        ctx.lineWidth = 10;
-        ctx.strokeStyle = "#000000";
-        ctx.strokeText("VÔ CỰC", w / 2, 205);
-
-        ctx.fillStyle = "#ffffff";
-        ctx.fillText("VÔ CỰC", w / 2, 205);
-
-        // Yellow Line
+        // Small same-hue ornaments give the wordmark a clear horizontal lockup.
+        ctx.shadowColor = "transparent";
+        ctx.lineWidth = 3;
+        ctx.lineCap = "round";
+        ctx.strokeStyle = UI_PALETTE.primaryTop;
         ctx.beginPath();
-        ctx.moveTo(w / 2 - 200, 245);
-        ctx.lineTo(w / 2 + 200, 245);
-        ctx.lineWidth = 4;
-        ctx.strokeStyle = "#FBC02D";
+        ctx.moveTo(w / 2 - 232, 44);
+        ctx.lineTo(w / 2 - 190, 44);
+        ctx.moveTo(w / 2 + 190, 44);
+        ctx.lineTo(w / 2 + 232, 44);
         ctx.stroke();
 
+        // Main wordmark.
+        ctx.font = `800 106px ${TITLE_FONT_FAMILY}`;
+        ctx.shadowColor = "rgba(143, 63, 44, 0.5)";
+        ctx.shadowBlur = 5;
+        ctx.shadowOffsetY = 7;
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = UI_PALETTE.primaryShadow;
+        const wordmarkGradient = ctx.createLinearGradient(0, 76, 0, 170);
+        wordmarkGradient.addColorStop(0, UI_PALETTE.primaryHighlight);
+        wordmarkGradient.addColorStop(0.48, UI_PALETTE.primaryTop);
+        wordmarkGradient.addColorStop(1, UI_PALETTE.primaryBottom);
+        ctx.fillStyle = wordmarkGradient;
+        ctx.strokeText("ZIGZAG", w / 2, 126);
+        ctx.fillText("ZIGZAG", w / 2, 126);
+        ctx.shadowColor = "transparent";
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
+
+        // Brand separator
+        ctx.beginPath();
+        ctx.moveTo(w / 2 - 118, 207);
+        ctx.lineTo(w / 2 - 13, 207);
+        ctx.moveTo(w / 2 + 13, 207);
+        ctx.lineTo(w / 2 + 118, 207);
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = "rgba(206, 72, 43, 0.66)";
+        ctx.stroke();
+        ctx.fillStyle = UI_PALETTE.primaryBottom;
+        ctx.beginPath();
+        ctx.moveTo(w / 2, 201);
+        ctx.lineTo(w / 2 + 6, 207);
+        ctx.lineTo(w / 2, 213);
+        ctx.lineTo(w / 2 - 6, 207);
+        ctx.closePath();
+        ctx.fill();
+
         // Highscore
-        ctx.font = `900 28px ${UI_FONT_FAMILY}`;
-        ctx.lineWidth = 5;
-        ctx.strokeStyle = "#F57F17";
-        ctx.strokeText("🏆 KỶ LỤC ĐIỂM: " + highScore, w / 2, 290);
-        ctx.fillStyle = "#FFF176";
-        ctx.fillText("🏆 KỶ LỤC ĐIỂM: " + highScore, w / 2, 290);
+        ctx.font = `900 32px ${TITLE_FONT_FAMILY}`;
+        ctx.fillStyle = "#3A2415";
+        ctx.strokeStyle = "#3A2415";
+        ctx.lineWidth = 1.6;
+        ctx.shadowColor = "rgba(255, 255, 255, 0.85)";
+        ctx.shadowBlur = 4;
+        ctx.strokeText("🏆 KỶ LỤC: " + highScore, w / 2, 270);
+        ctx.fillText("🏆 KỶ LỤC: " + highScore, w / 2, 270);
+        ctx.shadowColor = "transparent";
       },
       600,
       350,
     );
-    const titleSprite = new THREE.Sprite(
-      new THREE.SpriteMaterial({ map: titleTex }),
-    );
+    const titleSprite = new THREE.Sprite(createUIMaterial(titleTex));
 
     // Scale dynamically based on screen width to fit all devices
     const screenW = window.innerWidth;
@@ -693,7 +730,7 @@ export class UIManager {
       () => {
         if (this.onPlay) this.onPlay();
       },
-      "yellow",
+      "primary",
     );
     playBtn.position.set(0, -60, 0);
     this.activeGroup.add(playBtn);
@@ -704,7 +741,7 @@ export class UIManager {
         if (this.onAchievements) this.onAchievements();
       },
       70,
-      "yellow",
+      "gold",
     );
     trophyBtn.position.set(-80, -180, 0);
     this.activeGroup.add(trophyBtn);
@@ -715,7 +752,7 @@ export class UIManager {
         if (this.onSettings) this.onSettings();
       },
       70,
-      "yellow",
+      "gold",
     );
     settingsBtn.position.set(80, -180, 0);
     this.activeGroup.add(settingsBtn);
@@ -737,12 +774,14 @@ export class UIManager {
 
     const title = document.createElement("div");
     title.className = "game-popup-title";
-    title.innerText = "CÀI ĐẶT GAME";
+    title.innerText = "CÀI ĐẶT";
     card.appendChild(title);
 
     if (!isIngame) {
       const closeBtn = document.createElement("button");
       closeBtn.className = "game-popup-close-btn";
+      closeBtn.innerText = "✕";
+      closeBtn.setAttribute("aria-label", "Đóng");
       closeBtn.addEventListener("click", () => {
         this.playClickSound();
         overlay.style.opacity = "0";
@@ -761,22 +800,22 @@ export class UIManager {
 
     const createToggleRow = (label, isEnabled, onToggle) => {
       const row = document.createElement("div");
-      row.style.cssText = `width:100%; height:70px; border-radius:12px; background:#fbfaf5; border:3px solid #fff; display:flex; justify-content:space-between; align-items:center; padding:0 20px; box-sizing:border-box; margin-bottom: 15px;`;
+      row.style.cssText = `width:100%; height:70px; border-radius:12px; background:${UI_PALETTE.surfaceAlt}; border:3px solid ${UI_PALETTE.surfaceHighlight}; display:flex; justify-content:space-between; align-items:center; padding:0 20px; box-sizing:border-box; margin-bottom: 15px;`;
 
       const text = document.createElement("span");
-      text.style.cssText = `font-family:'Be Vietnam Pro', sans-serif; font-size:18px; font-weight:800; color:#47363B; letter-spacing:0.8px; white-space:nowrap;`;
+      text.style.cssText = `font-family:'Be Vietnam Pro', sans-serif; font-size:18px; font-weight:800; color:${UI_PALETTE.ink}; letter-spacing:0.8px; white-space:nowrap;`;
       text.innerText = label;
 
       const toggle = document.createElement("div");
       const isMuted = !isEnabled;
-      toggle.style.cssText = `width:96px; height:46px; border-radius:23px; background:${isMuted ? "#E8E3D8" : "#81C784"}; border:3px solid #fff; box-shadow: inset 0 3px 6px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.1); cursor:pointer; position:relative; transition: background 0.25s, transform 0.1s; flex-shrink:0; display:flex; align-items:center;`;
+      toggle.style.cssText = `width:96px; height:46px; border-radius:23px; background:${isMuted ? "#C8C1BC" : UI_PALETTE.primaryBottom}; border:3px solid ${UI_PALETTE.controlInk}; box-shadow: inset 0 3px 6px rgba(64,52,66,0.12), 0 4px 6px rgba(64,52,66,0.14); cursor:pointer; position:relative; transition: background 0.25s, transform 0.1s; flex-shrink:0; display:flex; align-items:center;`;
 
       const statusText = document.createElement("span");
       statusText.innerText = isMuted ? "OFF" : "ON";
-      statusText.style.cssText = `color:#fff; font-family:'Be Vietnam Pro', sans-serif; font-size:18px; font-weight:900; position:absolute; width:100%; text-align:center; padding-right:${isMuted ? "0" : "32px"}; padding-left:${isMuted ? "32px" : "0"}; box-sizing:border-box; transition: padding 0.25s; text-shadow: 0 2px 3px rgba(0,0,0,0.4); pointer-events:none;`;
+      statusText.style.cssText = `color:${UI_PALETTE.controlInk}; font-family:'Be Vietnam Pro', sans-serif; font-size:18px; font-weight:900; position:absolute; width:100%; text-align:center; padding-right:${isMuted ? "0" : "32px"}; padding-left:${isMuted ? "32px" : "0"}; box-sizing:border-box; transition: padding 0.25s; text-shadow: 0 2px 3px rgba(64,52,66,0.26); pointer-events:none;`;
 
       const knob = document.createElement("div");
-      knob.style.cssText = `width:36px; height:36px; border-radius:50%; background:#fff; position:absolute; top:2px; left:${isMuted ? "3px" : "51px"}; transition: left 0.25s cubic-bezier(0.3, 1.2, 0.5, 1); box-shadow: 0 3px 6px rgba(0,0,0,0.4); pointer-events:none;`;
+      knob.style.cssText = `width:36px; height:36px; border-radius:50%; background:${UI_PALETTE.controlInk}; position:absolute; top:2px; left:${isMuted ? "3px" : "51px"}; transition: left 0.25s cubic-bezier(0.3, 1.2, 0.5, 1); box-shadow: 0 3px 6px rgba(64,52,66,0.28); pointer-events:none;`;
 
       toggle.appendChild(statusText);
       toggle.appendChild(knob);
@@ -784,7 +823,9 @@ export class UIManager {
       toggle.onclick = () => {
         const newState = onToggle(); // Trả về trạng thái ENABLED sau khi toggle
         const nowMuted = !newState;
-        toggle.style.background = nowMuted ? "#E8E3D8" : "#81C784";
+        toggle.style.background = nowMuted
+          ? "#C8C1BC"
+          : UI_PALETTE.primaryBottom;
         knob.style.left = nowMuted ? "3px" : "51px";
         statusText.innerText = nowMuted ? "OFF" : "ON";
         statusText.style.paddingRight = nowMuted ? "0" : "32px";
@@ -898,43 +939,27 @@ export class UIManager {
 
     // Emblem Star
     const emblem = document.createElement("div");
-    emblem.style.fontSize = "54px";
-    emblem.style.margin = "20px 0 10px 0";
-    emblem.innerText = "⭐";
+    emblem.className = "game-result-emblem";
+    emblem.innerText = "★";
     card.appendChild(emblem);
 
     const isHigh = score > highScore && score > 0;
 
     if (isHigh) {
       const newRecord = document.createElement("div");
-      newRecord.style.background = "#FBC02D";
-      newRecord.style.border = "2px solid #FFF59D";
-      newRecord.style.borderRadius = "8px";
-      newRecord.style.color = "#ffffff";
-      newRecord.style.fontWeight = "900";
-      newRecord.style.padding = "4px 12px";
-      newRecord.style.display = "inline-block";
-      newRecord.style.fontSize = "16px";
-      newRecord.style.marginBottom = "10px";
+      newRecord.className = "game-record-badge";
       newRecord.innerText = "KỶ LỤC MỚI!";
       card.appendChild(newRecord);
     }
 
     const scoreVal = document.createElement("div");
-    scoreVal.style.fontSize = "26px";
-    scoreVal.style.fontWeight = "900";
-    scoreVal.style.color = "#47363B";
-    scoreVal.style.margin = "10px 0";
-    scoreVal.innerText = `ĐIỂM SỐ: ${score}`;
+    scoreVal.className = "game-result-score";
+    scoreVal.innerText = String(score);
     card.appendChild(scoreVal);
 
     const msgVal = document.createElement("div");
-    msgVal.style.fontSize = "16px";
-    msgVal.style.fontWeight = "800";
-    msgVal.style.color = "#47363B";
-    msgVal.innerText = isHigh
-      ? "🏆 KỶ LỤC MỚI! HẠNG #1"
-      : "Chúc bạn may mắn lần sau!";
+    msgVal.className = "game-result-message";
+    msgVal.innerText = isHigh ? "HẠNG #1" : "Chúc bạn may mắn lần sau!";
     card.appendChild(msgVal);
 
     const actionContainer = document.createElement("div");
@@ -946,7 +971,7 @@ export class UIManager {
     if (canDoubleReward) {
       const x2Btn = document.createElement("button");
       x2Btn.className = "game-paused-btn";
-      x2Btn.style.backgroundImage = `url(${this.getIconBase64("x2")})`;
+      x2Btn.style.backgroundImage = `url(${this.getIconBase64("x2", "primary")})`;
       x2Btn.addEventListener("click", () => {
         this.playClickSound();
         overlay.remove();
@@ -958,7 +983,7 @@ export class UIManager {
     // Replay
     const replayBtn = document.createElement("button");
     replayBtn.className = "game-paused-btn";
-    replayBtn.style.backgroundImage = `url(${this.getIconBase64("replay")})`;
+    replayBtn.style.backgroundImage = `url(${this.getIconBase64("replay", "primary")})`;
     replayBtn.addEventListener("click", () => {
       this.playClickSound();
       overlay.remove();
@@ -969,7 +994,7 @@ export class UIManager {
     // Home
     const homeBtn = document.createElement("button");
     homeBtn.className = "game-paused-btn";
-    homeBtn.style.backgroundImage = `url(${this.getIconBase64("home")})`;
+    homeBtn.style.backgroundImage = `url(${this.getIconBase64("home", "primary")})`;
     homeBtn.addEventListener("click", () => {
       this.playClickSound();
       overlay.remove();
@@ -1012,10 +1037,7 @@ export class UIManager {
     card.appendChild(title);
 
     const question = document.createElement("div");
-    question.style.fontSize = "22px";
-    question.style.fontWeight = "900";
-    question.style.color = "#47363B";
-    question.style.margin = "20px 0";
+    question.className = "game-popup-heading";
     question.innerText = "Bạn có muốn tiếp tục?";
     card.appendChild(question);
 
@@ -1048,50 +1070,24 @@ export class UIManager {
     btnContainer.style.display = "flex";
     btnContainer.style.flexDirection = "column";
     btnContainer.style.alignItems = "center";
-    btnContainer.style.gap = "15px";
+    btnContainer.style.gap = "12px";
 
     const yesBtn = document.createElement("button");
-    yesBtn.style.background = "linear-gradient(to bottom, #FFF176, #FBC02D)";
-    yesBtn.style.border = "none";
-    yesBtn.style.borderRadius = "12px";
-    yesBtn.style.padding = "10px 60px";
-    yesBtn.style.color = "#47363B";
-    yesBtn.style.fontSize = "26px";
-    yesBtn.style.fontWeight = "900";
-    yesBtn.style.fontFamily = "Be Vietnam Pro, sans-serif";
-    yesBtn.style.cursor = "pointer";
-    yesBtn.style.display = "flex";
-    yesBtn.style.alignItems = "center";
-    yesBtn.style.justifyContent = "center";
-    yesBtn.style.boxShadow = "0 6px 0 #F57F17, 0 8px 10px rgba(0,0,0,0.3)";
-    yesBtn.style.transition = "transform 0.1s, box-shadow 0.1s";
+    yesBtn.className = "game-action-btn";
 
     // Add video icon
     const videoIcon = document.createElement("img");
-    videoIcon.src = "/assest/iconbtn/images.png";
+    videoIcon.src = "/assest/iconbtn/video.webp";
     videoIcon.style.height = "30px";
     videoIcon.style.width = "auto";
     videoIcon.style.marginRight = "15px";
+    videoIcon.style.filter =
+      "brightness(0) saturate(100%) invert(18%) sepia(20%) saturate(1735%) hue-rotate(252deg) brightness(92%) contrast(91%)";
     yesBtn.appendChild(videoIcon);
 
     const yesText = document.createElement("span");
     yesText.innerText = "CÓ";
-    yesText.style.textShadow = "0 2px 4px rgba(0,0,0,0.3)";
     yesBtn.appendChild(yesText);
-
-    // Click effect for yesBtn
-    yesBtn.addEventListener("mousedown", () => {
-      yesBtn.style.transform = "translateY(6px)";
-      yesBtn.style.boxShadow = "0 0px 0 #F57F17, 0 2px 5px rgba(0,0,0,0.3)";
-    });
-    yesBtn.addEventListener("mouseup", () => {
-      yesBtn.style.transform = "translateY(0)";
-      yesBtn.style.boxShadow = "0 6px 0 #F57F17, 0 8px 10px rgba(0,0,0,0.3)";
-    });
-    yesBtn.addEventListener("mouseleave", () => {
-      yesBtn.style.transform = "translateY(0)";
-      yesBtn.style.boxShadow = "0 6px 0 #F57F17, 0 8px 10px rgba(0,0,0,0.3)";
-    });
 
     yesBtn.addEventListener("click", () => {
       this.playClickSound();
@@ -1100,14 +1096,9 @@ export class UIManager {
     });
     btnContainer.appendChild(yesBtn);
 
-    const noText = document.createElement("div");
+    const noText = document.createElement("button");
+    noText.className = "game-skip-btn";
     noText.innerText = "Không, cảm ơn";
-    noText.style.fontSize = "16px";
-    noText.style.fontWeight = "800";
-    noText.style.color = "#47363B";
-    noText.style.textDecoration = "underline";
-    noText.style.cursor = "pointer";
-    noText.style.padding = "5px";
     noText.addEventListener("click", () => {
       this.playClickSound();
       overlay.remove();
@@ -1134,25 +1125,28 @@ export class UIManager {
     const createTextSprite = (text) => {
       const tex = this.createTextureFromCanvas(
         (ctx, w, h) => {
-          ctx.font = `900 28px ${UI_FONT_FAMILY}`;
+          ctx.font = `800 32px ${TITLE_FONT_FAMILY}`;
           ctx.textAlign = "left";
           ctx.textBaseline = "middle";
-          ctx.lineWidth = 4;
-          ctx.strokeStyle = "#000000";
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = UI_PALETTE.ink;
           ctx.lineJoin = "round";
-          ctx.strokeText(text, 5, h / 2);
-          ctx.fillStyle = "#ffffff";
-          ctx.fillText(text, 5, h / 2);
+          ctx.shadowColor = "rgba(95, 62, 35, 0.32)";
+          ctx.shadowBlur = 4;
+          ctx.shadowOffsetY = 2;
+          ctx.strokeText(text, 7, h / 2);
+          ctx.fillStyle = UI_PALETTE.secondaryTop;
+          ctx.fillText(text, 7, h / 2);
         },
         200,
-        40,
+        48,
       );
-      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex }));
-      sprite.scale.set(200, 40, 1);
+      const sprite = new THREE.Sprite(createUIMaterial(tex));
+      sprite.scale.set(200, 48, 1);
       return sprite;
     };
 
-    this.scoreSprite = createTextSprite("ĐIỂM: 0");
+    this.scoreSprite = createTextSprite("0");
     this.scoreSprite.position.set(
       -window.innerWidth / 2 + 120,
       window.innerHeight / 2 - 40,
@@ -1166,7 +1160,7 @@ export class UIManager {
         if (this.onSettings) this.onSettings();
       },
       50,
-      "yellow",
+      "gold",
     );
     settingsBtn.position.set(
       window.innerWidth / 2 - 50,
@@ -1178,23 +1172,24 @@ export class UIManager {
     // Tutorial Text (Center Screen)
     const tutTex = this.createTextureFromCanvas(
       (ctx, w, h) => {
-        ctx.font = `900 26px ${UI_FONT_FAMILY}`;
+        ctx.font = `800 25px ${UI_FONT_FAMILY}`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
 
-        ctx.fillStyle = "#ffffff";
-        ctx.strokeStyle = "#000000";
-        ctx.lineWidth = 6;
+        ctx.fillStyle = UI_PALETTE.surface;
+        ctx.strokeStyle = UI_PALETTE.ink;
+        ctx.lineWidth = 2;
         ctx.lineJoin = "round";
+        ctx.shadowColor = "rgba(82, 55, 37, 0.38)";
+        ctx.shadowBlur = 5;
+        ctx.shadowOffsetY = 2;
         ctx.strokeText("CHẠM ĐỂ BẺ LÁI!", w / 2, h / 2);
         ctx.fillText("CHẠM ĐỂ BẺ LÁI!", w / 2, h / 2);
       },
       400,
       60,
     );
-    const tutSprite = new THREE.Sprite(
-      new THREE.SpriteMaterial({ map: tutTex }),
-    );
+    const tutSprite = new THREE.Sprite(createUIMaterial(tutTex));
     tutSprite.scale.set(400, 60, 1);
     tutSprite.position.set(0, window.innerHeight / 2 - 120, 0);
     this.hudGroup.add(tutSprite);
@@ -1228,25 +1223,28 @@ export class UIManager {
     const createTextSprite = (text) => {
       const tex = this.createTextureFromCanvas(
         (ctx, w, h) => {
-          ctx.font = `900 28px ${UI_FONT_FAMILY}`;
+          ctx.font = `800 32px ${TITLE_FONT_FAMILY}`;
           ctx.textAlign = "left";
           ctx.textBaseline = "middle";
-          ctx.lineWidth = 4;
-          ctx.strokeStyle = "#000000";
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = UI_PALETTE.ink;
           ctx.lineJoin = "round";
-          ctx.strokeText(text, 5, h / 2);
-          ctx.fillStyle = "#ffffff";
-          ctx.fillText(text, 5, h / 2);
+          ctx.shadowColor = "rgba(95, 62, 35, 0.32)";
+          ctx.shadowBlur = 4;
+          ctx.shadowOffsetY = 2;
+          ctx.strokeText(text, 7, h / 2);
+          ctx.fillStyle = UI_PALETTE.secondaryTop;
+          ctx.fillText(text, 7, h / 2);
         },
         200,
-        40,
+        48,
       );
-      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex }));
-      sprite.scale.set(200, 40, 1);
+      const sprite = new THREE.Sprite(createUIMaterial(tex));
+      sprite.scale.set(200, 48, 1);
       return sprite;
     };
 
-    this.scoreSprite = createTextSprite("ĐIỂM: " + score);
+    this.scoreSprite = createTextSprite(String(score));
     this.scoreSprite.position.set(
       -window.innerWidth / 2 + 120,
       window.innerHeight / 2 - 40,
@@ -1276,6 +1274,8 @@ export class UIManager {
 
     const closeBtn = document.createElement("button");
     closeBtn.className = "game-popup-close-btn";
+    closeBtn.innerText = "✕";
+    closeBtn.setAttribute("aria-label", "Đóng");
     closeBtn.addEventListener("click", () => {
       this.playClickSound();
       overlay.style.opacity = "0";
@@ -1328,7 +1328,7 @@ export class UIManager {
       <tr>
         <th style="text-align: left; padding-left: 10px;">HẠNG</th>
         <th style="text-align: center;">TÊN</th>
-        <th style="text-align: right; padding-right: 10px;">ĐIỂM SỐ</th>
+        <th aria-label="Điểm số" style="text-align: right; padding-right: 10px;">#</th>
       </tr>
     `;
     table.appendChild(thead);
@@ -1368,7 +1368,7 @@ export class UIManager {
     const scoreItem = document.createElement("div");
     scoreItem.className = "game-achievements-footer-item";
     scoreItem.style.width = "50%";
-    scoreItem.innerText = `Điểm: ${personalScore}`;
+    scoreItem.innerText = String(personalScore);
     footer.appendChild(scoreItem);
 
     card.appendChild(footer);
@@ -1390,11 +1390,34 @@ export class UIManager {
       const style = document.createElement("style");
       style.id = "game-popup-shared-styles";
       style.textContent = `
+        :root {
+          --zig-btn-top: ${UI_PALETTE.primaryTop};
+          --zig-btn-bottom: ${UI_PALETTE.primaryBottom};
+          --zig-btn-base: ${UI_PALETTE.primaryShadow};
+          --zig-btn-border: ${UI_PALETTE.border};
+          --zig-btn-ink: ${UI_PALETTE.ink};
+          --zig-control-ink: ${UI_PALETTE.controlInk};
+          --zig-secondary-top: ${UI_PALETTE.primaryTop};
+          --zig-secondary-bottom: ${UI_PALETTE.primaryBottom};
+          --zig-secondary-base: ${UI_PALETTE.primaryShadow};
+          --zig-danger-top: ${UI_PALETTE.primaryTop};
+          --zig-danger-bottom: ${UI_PALETTE.primaryBottom};
+          --zig-danger-base: ${UI_PALETTE.primaryShadow};
+          --zig-success: ${UI_PALETTE.primaryBottom};
+          --zig-btn-focus: ${UI_PALETTE.focus};
+          --zig-surface: ${UI_PALETTE.surface};
+          --zig-surface-alt: ${UI_PALETTE.surfaceAlt};
+          --zig-surface-highlight: ${UI_PALETTE.surfaceHighlight};
+          --zig-ink: ${UI_PALETTE.ink};
+          --zig-muted: ${UI_PALETTE.mutedInk};
+          --zig-font-display: 'Baloo 2', 'Be Vietnam Pro', sans-serif;
+          --zig-font-body: 'Be Vietnam Pro', sans-serif;
+        }
         .game-popup-overlay {
           position: fixed;
           top: 0; left: 0;
           width: 100dvw; height: 100dvh;
-          background: rgba(0, 0, 0, 0.65);
+          background: rgba(43, 50, 47, 0.64);
           backdrop-filter: blur(6px);
           -webkit-backdrop-filter: blur(6px);
           display: flex; justify-content: center; align-items: center;
@@ -1402,19 +1425,22 @@ export class UIManager {
           opacity: 0;
           transition: opacity 0.25s ease;
           box-sizing: border-box;
+          padding: 24px 16px;
+          overflow-y: auto;
         }
         .game-popup-card {
-          background: #fffae6;
-          border: 5px solid #FBC02D;
-          box-shadow: inset 0 0 0 2.5px #FFF59D, 0 6px 0 #F57F17, 0 12px 25px rgba(0, 0, 0, 0.35);
+          background: var(--zig-surface);
+          border: 4px solid var(--zig-btn-border);
+          box-shadow: inset 0 0 0 2px var(--zig-surface-highlight), 0 5px 0 #CDB7A3, 0 12px 25px rgba(64, 52, 66, 0.22);
           border-radius: 20px;
           padding: 36px 24px 20px 24px;
           width: 90%; max-width: 380px;
           text-align: center;
           position: relative;
           transform: scale(0.85);
-          transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.25s ease;
-          font-family:'Be Vietnam Pro', sans-serif;
+          transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+          font-family: var(--zig-font-body);
+          color: var(--zig-ink);
           box-sizing: border-box;
           opacity: 0;
         }
@@ -1426,38 +1452,102 @@ export class UIManager {
           top: -25px;
           left: 50%;
           transform: translateX(-50%);
-          background: linear-gradient(180deg, #FFF176 0%, #FBC02D 100%);
-          border: 2.5px solid #FFF9C4;
-          border-radius: 12px;
-          box-shadow: 0 4px 0 #F57F17;
-          color: #47363B;
-          font-family:'Be Vietnam Pro', sans-serif;
-          font-size: 20px;
+          background: linear-gradient(180deg, var(--zig-btn-top) 0%, var(--zig-btn-bottom) 100%);
+          border: none;
+          border-radius: 14px;
+          box-shadow: 0 5px 0 var(--zig-btn-base), 0 9px 18px rgba(93, 54, 34, 0.18);
+          color: var(--zig-control-ink);
+          font-family: var(--zig-font-display);
+          font-size: 22px;
           font-weight: 800;
-          letter-spacing: 1.5px;
-          padding: 6px 32px;
-          text-shadow: 0 2px 2px rgba(0, 0, 0, 0.3);
+          letter-spacing: 0.5px;
+          line-height: 1.1;
+          padding: 8px 32px;
+          text-shadow: 0 2px 0 rgba(164, 65, 37, 0.3);
           white-space: nowrap;
           text-transform: uppercase;
         }
+        .game-popup-heading {
+          margin: 20px 0;
+          color: var(--zig-ink);
+          font-family: var(--zig-font-display);
+          font-size: 24px;
+          font-weight: 800;
+          line-height: 1.25;
+        }
+        .game-record-badge {
+          display: inline-block;
+          margin-bottom: 8px;
+          padding: 4px 8px;
+          color: var(--zig-btn-bottom);
+          font-family: var(--zig-font-display);
+          font-size: 16px;
+          font-weight: 800;
+          letter-spacing: 0.3px;
+        }
+        .game-result-emblem {
+          margin: 20px 0 8px;
+          color: var(--zig-btn-bottom);
+          font-family: var(--zig-font-display);
+          font-size: 58px;
+          font-weight: 800;
+          line-height: 1;
+          text-shadow: 0 4px 0 #FFD3AD;
+        }
+        .game-result-score {
+          margin: 8px 0;
+          color: var(--zig-ink);
+          font-family: var(--zig-font-display);
+          font-size: 48px;
+          font-weight: 800;
+          line-height: 1;
+          text-shadow: 0 3px 0 #E5D6CA;
+        }
+        .game-result-message {
+          color: var(--zig-muted);
+          font-family: var(--zig-font-body);
+          font-size: 15px;
+          font-weight: 700;
+          line-height: 1.4;
+        }
         .game-popup-close-btn {
           position: absolute;
-          top: -16px;
-          right: -16px;
-          width: 40px;
-          height: 40px;
+          top: -18px;
+          right: -18px;
+          width: 44px;
+          height: 44px;
           border: none;
-          background: url(/assest/iconbtn/close_btn.png) no-repeat center center;
-          background-size: contain;
+          border-radius: 50%;
+          background: linear-gradient(180deg, var(--zig-btn-top), var(--zig-btn-bottom));
+          box-shadow: 0 5px 0 var(--zig-btn-base), 0 8px 14px rgba(64, 52, 66, 0.18);
+          color: var(--zig-control-ink);
+          font-family: 'Be Vietnam Pro', sans-serif;
+          font-size: 21px;
+          font-weight: 800;
+          line-height: 1;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0;
           cursor: pointer;
-          transition: transform 0.15s ease;
+          transition: transform 0.1s ease-out, box-shadow 0.1s ease-out, filter 0.1s ease-out;
           z-index: 100100;
         }
         .game-popup-close-btn:hover {
-          transform: scale(1.1);
+          transform: translateY(-1px);
+          filter: brightness(1.025);
         }
         .game-popup-close-btn:active {
-          transform: scale(0.92);
+          transform: translateY(4px);
+          box-shadow: 0 1px 0 var(--zig-btn-base);
+        }
+        .game-popup-close-btn:focus-visible,
+        .game-action-btn:focus-visible,
+        .game-skip-btn:focus-visible,
+        .game-settings-reset-btn:focus-visible,
+        .game-achievements-arrow-btn:focus-visible {
+          outline: 3px solid var(--zig-btn-focus);
+          outline-offset: 3px;
         }
         .game-settings-row-container {
           margin-top: 18px;
@@ -1467,8 +1557,8 @@ export class UIManager {
           width: 100%;
         }
         .game-settings-row {
-          background: #ffffff;
-          border: 3.5px solid #FFF9C4;
+          background: var(--zig-surface-alt);
+          border: 3.5px solid var(--zig-surface-highlight);
           border-radius: 15px;
           padding: 10px 18px;
           display: flex;
@@ -1481,7 +1571,7 @@ export class UIManager {
           font-family:'Be Vietnam Pro', sans-serif;
           font-size: 18px;
           font-weight: 700;
-          color: #47363B;
+          color: var(--zig-ink);
           display: flex;
           align-items: center;
           gap: 8px;
@@ -1503,37 +1593,71 @@ export class UIManager {
         .game-settings-toggle-btn:active {
           transform: scale(0.95);
         }
+        .game-action-btn,
         .game-settings-reset-btn {
-          background: linear-gradient(180deg, #FFF176 0%, #FBC02D 100%);
+          background: linear-gradient(180deg, var(--zig-btn-top) 0%, var(--zig-btn-bottom) 100%);
           border: none;
-          box-shadow: 0 4px 0 #F57F17;
+          box-shadow: 0 6px 0 var(--zig-btn-base), 0 9px 16px rgba(93, 54, 34, 0.18);
           border-radius: 12px;
-          color: #47363B;
+          color: var(--zig-control-ink);
           font-family:'Be Vietnam Pro', sans-serif;
-          font-size: 14px;
           font-weight: 800;
-          padding: 10px 20px;
           cursor: pointer;
-          margin-top: 20px;
-          transition: transform 0.1s ease, filter 0.1s ease;
-          text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+          transition: transform 0.1s ease-out, box-shadow 0.1s ease-out, filter 0.1s ease-out;
           display: inline-flex;
           align-items: center;
           justify-content: center;
           gap: 8px;
+        }
+        .game-action-btn {
+          min-width: 200px;
+          min-height: 56px;
+          padding: 12px 32px;
+          font-size: 26px;
+        }
+        .game-skip-btn {
+          min-width: 160px;
+          min-height: 44px;
+          padding: 8px 12px;
+          border: 0;
+          background: transparent;
+          box-shadow: none;
+          color: var(--zig-muted);
+          font-family: 'Be Vietnam Pro', sans-serif;
+          font-size: 14px;
+          font-weight: 700;
+          text-decoration: underline;
+          text-decoration-thickness: 1px;
+          text-underline-offset: 3px;
+          cursor: pointer;
+          transition: color 0.1s ease-out, transform 0.1s ease-out;
+        }
+        .game-settings-reset-btn {
+          font-size: 14px;
+          padding: 10px 20px;
+          margin-top: 20px;
         }
         .game-settings-reset-icon {
           width: 24px;
           height: 24px;
           object-fit: contain;
         }
+        .game-action-btn:hover,
         .game-settings-reset-btn:hover {
-          transform: scale(1.05);
-          filter: brightness(1.05);
+          transform: translateY(-1px);
+          filter: brightness(1.025);
         }
+        .game-skip-btn:hover {
+          color: var(--zig-btn-ink);
+          transform: translateY(-1px);
+        }
+        .game-action-btn:active,
         .game-settings-reset-btn:active {
-          transform: translateY(2px);
-          box-shadow: 0 2px 0 #F57F17;
+          transform: translateY(5px);
+          box-shadow: 0 1px 0 var(--zig-btn-base);
+        }
+        .game-skip-btn:active {
+          transform: translateY(1px);
         }
 
         /* Paused popup */
@@ -1541,25 +1665,32 @@ export class UIManager {
           display: flex;
           justify-content: center;
           align-items: center;
-          gap: 35px;
+          gap: 16px;
           margin-top: 30px;
+          flex-wrap: nowrap;
         }
         .game-paused-btn {
           width: 64px;
-          height: 64px;
+          height: 72px;
+          flex: 0 0 64px;
           border: none;
-          background-size: contain;
+          background-size: 100% 100%;
           background-repeat: no-repeat;
           background-position: center;
           background-color: transparent;
           cursor: pointer;
-          transition: transform 0.15s ease, filter 0.15s ease;
+          transition: transform 0.1s ease-out, filter 0.1s ease-out;
         }
         .game-paused-btn:hover {
-          transform: scale(1.1);
+          transform: translateY(-1px);
+          filter: brightness(1.025);
         }
         .game-paused-btn:active {
-          transform: scale(0.92);
+          transform: translateY(5px);
+        }
+        .game-paused-btn:focus-visible {
+          outline: 3px solid var(--zig-btn-focus);
+          outline-offset: 3px;
         }
 
         /* Achievements popup */
@@ -1567,12 +1698,12 @@ export class UIManager {
           font-family:'Be Vietnam Pro', sans-serif;
           font-size: 13px;
           font-weight: 700;
-          color: #1B5E20;
+          color: var(--zig-muted);
           margin: 10px 0;
           text-align: center;
         }
         .game-achievements-user-text.logged-in {
-          color: #388E3C;
+          color: var(--zig-success);
         }
         .game-achievements-level-selector {
           display: flex;
@@ -1582,21 +1713,29 @@ export class UIManager {
           margin-top: 14px;
         }
         .game-achievements-arrow-btn {
-          background: none;
+          width: 44px;
+          height: 44px;
+          background: linear-gradient(180deg, var(--zig-secondary-top), var(--zig-secondary-bottom));
           border: none;
+          border-radius: 12px;
+          box-shadow: 0 5px 0 var(--zig-secondary-base);
           font-size: 22px;
-          color: #2E7D32;
+          color: var(--zig-control-ink);
           cursor: pointer;
-          transition: transform 0.1s ease;
+          transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
         }
         .game-achievements-arrow-btn:hover {
-          transform: scale(1.2);
+          transform: translateY(-1px);
+        }
+        .game-achievements-arrow-btn:active {
+          transform: translateY(4px);
+          box-shadow: 0 1px 0 var(--zig-secondary-base);
         }
         .game-achievements-level-name {
           font-family:'Be Vietnam Pro', sans-serif;
           font-size: 22px;
           font-weight: 800;
-          color: #2E7D32;
+          color: var(--zig-ink);
           min-width: 180px;
           text-align: center;
         }
@@ -1609,39 +1748,39 @@ export class UIManager {
         .game-achievements-table th {
           position: sticky;
           top: 0;
-          background: #fffae6;
+          background: var(--zig-surface);
           z-index: 10;
           font-size: 12px;
           font-weight: 800;
-          color: #1B5E20;
+          color: var(--zig-muted);
           padding: 8px 4px;
-          border-bottom: 2px solid #C8E6C9;
+          border-bottom: 2px solid var(--zig-surface-highlight);
         }
         .game-achievements-table td {
           font-size: 12px;
           font-weight: 700;
-          color: #1B5E20;
+          color: var(--zig-ink);
           padding: 8px 4px;
           text-align: center;
         }
         .game-achievements-table tr.highlighted td {
-          color: #2E7D32;
+          color: var(--zig-btn-bottom);
           font-weight: 900;
         }
         .game-achievements-table tr.rank-0 td {
-          color: #8a6d20;
+          color: var(--zig-btn-bottom);
           font-weight: 900;
         }
         .game-achievements-table tr.rank-1 td {
-          color: #5a5a5a;
+          color: var(--zig-ink);
           font-weight: 900;
         }
         .game-achievements-table tr.rank-2 td {
-          color: #8c5a3c;
+          color: var(--zig-muted);
           font-weight: 900;
         }
         .game-achievements-table tbody tr {
-          border-bottom: 1px solid #E8F5E9;
+          border-bottom: 1px solid var(--zig-surface-highlight);
         }
         .game-achievements-table tbody tr:last-child {
           border-bottom: none;
@@ -1656,18 +1795,18 @@ export class UIManager {
           width: 6px;
         }
         .game-achievements-table-container::-webkit-scrollbar-track {
-          background: #f1ebd8;
+          background: var(--zig-surface-alt);
           border-radius: 4px;
         }
         .game-achievements-table-container::-webkit-scrollbar-thumb {
-          background: #c5beaa;
+          background: #C8B8AA;
           border-radius: 4px;
         }
         /* Footer personal best */
         .game-achievements-footer {
           margin-top: 14px;
-          background: #E8F5E9;
-          border: 2px solid #A5D6A7;
+          background: #FFF0E1;
+          border: 2px solid var(--zig-btn-border);
           border-radius: 12px;
           padding: 10px 14px;
           display: flex;
@@ -1680,7 +1819,7 @@ export class UIManager {
         .game-achievements-footer-item {
           font-size: 13px;
           font-weight: 900;
-          color: #d32f2f;
+          color: var(--zig-btn-bottom);
           width: 33%;
           text-align: center;
         }
