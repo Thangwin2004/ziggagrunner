@@ -3,6 +3,9 @@ import { GameManager } from "./core/GameManager.js";
 import { winkGame } from "./integrations/wink/wink-adapter.js";
 import { waitForGameFonts } from "./utils/fontLoader.js";
 import { installFocusPause } from "./utils/focusPause.js";
+import { installInteractionGuard } from "./utils/interactionGuard.js";
+
+installInteractionGuard();
 
 // 1. Setup Three.js Scene, Camera, Renderer
 const scene = new THREE.Scene();
