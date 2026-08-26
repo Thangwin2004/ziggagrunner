@@ -7,6 +7,8 @@
   "bridgeVersion": "9.0.1",
   "allowedParentOrigins": [
     "https://winkgames.papastudio.net",
+    "https://winkgames.fun",
+    "https://www.winkgames.fun",
     "http://localhost:3000"
   ]
 }

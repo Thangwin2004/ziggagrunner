@@ -16,6 +16,8 @@ const bridge = Buffer.from(
 const sha256 = createHash("sha256").update(bridge).digest("hex");
 const expectedParents = [
   "https://winkgames.papastudio.net",
+  "https://winkgames.fun",
+  "https://www.winkgames.fun",
   "http://localhost:3000",
 ];
 
