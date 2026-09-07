@@ -1,3 +1,4 @@
+import { t } from "./system/I18nManager.js";
 import * as THREE from "three";
 import { GameManager } from "./core/GameManager.js";
 import { winkGame } from "./integrations/wink/wink-adapter.js";
@@ -193,17 +194,18 @@ const splashProgress = document.getElementById("splash-progress");
 const splashText = document.getElementById("splash-text");
 if (splash && splashProgress && splashText) {
   let progress = 0;
+  splashText.innerText = t("loading.progress", { progress });
   const interval = setInterval(() => {
     progress += Math.floor(Math.random() * 15) + 5;
     if (progress > 90) progress = 90;
     splashProgress.style.width = progress + "%";
-    splashText.innerText = `Loading ${progress}%`;
+    splashText.innerText = t("loading.progress", { progress });
   }, 50);
 
   setTimeout(() => {
     clearInterval(interval);
     splashProgress.style.width = "100%";
-    splashText.innerText = `Loading 100%`;
+    splashText.innerText = t("loading.progress", { progress: 100 });
     setTimeout(() => {
       splash.style.opacity = "0";
       setTimeout(() => {

@@ -1,3 +1,4 @@
+import { t } from "../system/I18nManager.js";
 export function gameAlert(message) {
   return new Promise((resolve) => {
     if (!document.getElementById("vibrant-modal-styles")) {
@@ -28,7 +29,7 @@ export function gameAlert(message) {
 
     const ribbon = document.createElement("div");
     ribbon.className = "modal-ribbon pink";
-    ribbon.innerHTML = "<span>THÔNG BÁO</span>";
+    ribbon.innerHTML = `<span>${t("dialog.notice")}</span>`;
 
     const card = document.createElement("div");
     card.className = "modal-card";
@@ -40,7 +41,7 @@ export function gameAlert(message) {
     const okBtn = document.createElement("button");
     okBtn.className = "icon-btn";
     okBtn.innerText = "✓";
-    okBtn.setAttribute("aria-label", "Đồng ý");
+    okBtn.setAttribute("aria-label", t("actions.yes"));
     okBtn.style.marginTop = "10px";
 
     okBtn.onclick = () => {
@@ -74,7 +75,7 @@ export function gameConfirm(message) {
 
     const ribbon = document.createElement("div");
     ribbon.className = "modal-ribbon";
-    ribbon.innerHTML = "<span>XÁC NHẬN</span>";
+    ribbon.innerHTML = `<span>${t("dialog.confirm")}</span>`;
 
     const card = document.createElement("div");
     card.className = "modal-card";
@@ -92,7 +93,7 @@ export function gameConfirm(message) {
     const noBtn = document.createElement("button");
     noBtn.className = "icon-btn";
     noBtn.innerText = "×";
-    noBtn.setAttribute("aria-label", "Hủy");
+    noBtn.setAttribute("aria-label", t("actions.cancel"));
     noBtn.onclick = () => {
       document.body.removeChild(overlay);
       resolve(false);
@@ -101,7 +102,7 @@ export function gameConfirm(message) {
     const yesBtn = document.createElement("button");
     yesBtn.className = "icon-btn";
     yesBtn.innerText = "✓";
-    yesBtn.setAttribute("aria-label", "Đồng ý");
+    yesBtn.setAttribute("aria-label", t("actions.yes"));
     yesBtn.onclick = () => {
       document.body.removeChild(overlay);
       resolve(true);

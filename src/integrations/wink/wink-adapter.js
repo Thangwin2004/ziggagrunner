@@ -15,6 +15,7 @@ import {
   complete,
   getCapabilities,
   getLeaderboard,
+  getPersonalBest,
   getState,
   onMute,
   onPause,
@@ -40,6 +41,17 @@ export class WinkGameIntegration {
   /** @type {Array<() => void>} */
   #disposers = [];
 
+  /** @type {object | null} */
+  #cachedPersonalBest = null;
+
+  constructor() {
+    this.observe((state) => {
+      if (state?.phase === "ready_authenticated" && !this.#cachedPersonalBest) {
+        this.getPersonalBest().catch(() => {});
+      }
+    });
+  }
+
   /**
    * Open a new semantic round. Keep the returned handle for the whole round —
    * including through any revive, bonus, or continue step — so completion and
@@ -64,6 +76,8 @@ export class WinkGameIntegration {
     if (this.#completedRounds.has(round.roundId)) return false;
     this.#completedRounds.add(round.roundId);
 
+    if (!this.capabilities.complete) return false;
+
     const { playDurationMs, ...rest } = extra;
     try {
       complete({
@@ -85,17 +99,42 @@ export class WinkGameIntegration {
    * @param {{ score: number, playTime?: number, gameMode?: string, counter?: number, metadata?: object }} input
    * @returns {Promise<{ entry: object, isNewBest: boolean, previousBest: number|null }>}
    */
-  submitFinalScore(input) {
-    return submitScore(input);
+  async submitFinalScore(input) {
+    const res = await submitScore(input);
+    if (res?.entry) {
+      this.#cachedPersonalBest = res.entry;
+    }
+    return res;
   }
 
   /**
    * Refresh the leaderboard.
    * @param {{ limit?: number, offset?: number }} [options]
-   * @returns {Promise<{ entries: Array, total: number }>}
+   * @returns {Promise<{ entries: Array, total: number, me?: object|null }>}
    */
-  refreshLeaderboard(options) {
-    return getLeaderboard(options);
+  async refreshLeaderboard(options) {
+    const res = await getLeaderboard(options);
+    if (res?.me) {
+      this.#cachedPersonalBest = res.me;
+    }
+    return res;
+  }
+
+  /**
+   * Get the personal best of current player.
+   * @returns {Promise<{ me: object | null }>}
+   */
+  async getPersonalBest() {
+    const res = await getPersonalBest();
+    if (res?.me) {
+      this.#cachedPersonalBest = res.me;
+    }
+    return res;
+  }
+
+  /** @returns {object | null} */
+  get personalBest() {
+    return this.#cachedPersonalBest;
   }
 
   /** @returns {{ getLeaderboard: boolean, submitScore: boolean, complete: boolean }} */

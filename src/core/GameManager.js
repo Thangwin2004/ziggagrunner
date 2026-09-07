@@ -10,6 +10,10 @@ import { AdManager } from "./AdManager.js";
 import { winkGame } from "../integrations/wink/wink-adapter.js";
 import gsap from "gsap";
 
+const MOVEMENT_SCORE_INTERVAL_SECONDS = 1;
+const MOVEMENT_SCORE_PER_INTERVAL = 1;
+const COIN_SCORE = 100;
+
 export class GameManager {
   constructor(scene, camera, uiScene, uiCamera, bgScene, bgCamera, domElement) {
     this.scene = scene;
@@ -40,6 +44,7 @@ export class GameManager {
 
     this.score = 0;
     this.coinsThisRun = 0;
+    this.movementScoreElapsed = 0;
     this.worldData = null;
     this.fallCameraForwardX = 0;
     this.fallCameraForwardZ = 1;
@@ -226,6 +231,7 @@ export class GameManager {
   loadLevel() {
     this.score = 0;
     this.coinsThisRun = 0;
+    this.movementScoreElapsed = 0;
     this.hasRevivedThisRun = false;
     this.hasDoubledThisRun = false;
 
@@ -245,8 +251,9 @@ export class GameManager {
     this.worldData.onCoinCollected = (coin) => {
       this.audio.playCoin();
       const amount = this.hasDoubledThisRun ? 2 : 1;
+      const scoreAward = COIN_SCORE * amount;
       this.coinsThisRun += amount;
-      this.score += 100 * amount;
+      this.score += scoreAward;
 
       this.ui.updateHUD(this.score, this.coinsThisRun);
 
@@ -255,7 +262,7 @@ export class GameManager {
           coin.mesh.position.x,
           coin.mesh.position.y,
           coin.mesh.position.z,
-          amount,
+          scoreAward,
         );
       }
     };
@@ -399,9 +406,16 @@ export class GameManager {
         // Endless Generation
         this.levelBuilder.update(this.player);
 
-        // Increase score just by surviving
-        this.score += 1;
-        if (this.score % 60 === 0) {
+        // Award survival points on a time interval, rather than every frame.
+        // This keeps the result stable across refresh rates and makes coins valuable.
+        this.movementScoreElapsed += deltaTime;
+        const movementAwards = Math.floor(
+          this.movementScoreElapsed / MOVEMENT_SCORE_INTERVAL_SECONDS,
+        );
+        if (movementAwards > 0) {
+          this.score += movementAwards * MOVEMENT_SCORE_PER_INTERVAL;
+          this.movementScoreElapsed -=
+            movementAwards * MOVEMENT_SCORE_INTERVAL_SECONDS;
           this.ui.updateHUD(this.score, this.coinsThisRun);
         }
 

@@ -1,3 +1,4 @@
+import { i18n, t } from "../system/I18nManager.js";
 import * as THREE from "three";
 import gsap from "gsap";
 import { winkGame } from "../integrations/wink/wink-adapter.js";
@@ -49,6 +50,13 @@ function createUIMaterial(map) {
 }
 
 function getEffectiveUser() {
+  if (winkGame && winkGame.personalBest?.displayName) {
+    return {
+      name: winkGame.personalBest.displayName,
+      avatar: "/assest/image/imagebldp/001_avatar_laclac.webp",
+    };
+  }
+
   try {
     const savedUser = window.localStorage.getItem("google_user");
     if (savedUser) {
@@ -61,7 +69,7 @@ function getEffectiveUser() {
 
   if (winkGame && winkGame.isAuthenticated) {
     return {
-      name: "Thành viên",
+      name: t("account.member"),
       avatar: "/assest/image/imagebldp/001_avatar_laclac.webp",
     };
   }
@@ -96,9 +104,25 @@ export class UIManager {
     this.scene.add(this.hudGroup);
 
     this.scoreSprite = null;
+    i18n.subscribe(() => this.refreshLanguageView?.());
 
     domElement.addEventListener("pointermove", this.onPointerMove.bind(this));
     domElement.addEventListener("pointerdown", this.onPointerDown.bind(this));
+  }
+
+  createLanguageSelect() {
+    const select = document.createElement("select");
+    select.setAttribute("aria-label", t("settings.language"));
+    select.innerHTML =
+      '<option value="en">English</option><option value="vi">Tiếng Việt</option>';
+    select.value = i18n.language;
+    select.style.cssText =
+      'min-height:44px;max-width:100%;padding:8px 12px;border:2px solid #E6D2BF;border-radius:12px;background:#FFF9F1;color:#403442;font:600 14px "Be Vietnam Pro",sans-serif;cursor:pointer;';
+    select.addEventListener("change", () => {
+      this.playClickSound();
+      i18n.setLanguage(select.value);
+    });
+    return select;
   }
 
   playClickSound() {
@@ -191,6 +215,7 @@ export class UIManager {
   }
 
   clear() {
+    this.refreshLanguageView = null;
     // Clear HTML popups
     const settings = document.getElementById("game-settings-overlay-id");
     if (settings) settings.remove();
@@ -203,12 +228,16 @@ export class UIManager {
 
     while (this.activeGroup.children.length > 0) {
       const child = this.activeGroup.children[0];
+      gsap.killTweensOf(child.scale);
+      if (child.material) gsap.killTweensOf(child.material);
       if (child.material && child.material.map) child.material.map.dispose();
       if (child.material) child.material.dispose();
       this.activeGroup.remove(child);
     }
     while (this.hudGroup.children.length > 0) {
       const child = this.hudGroup.children[0];
+      gsap.killTweensOf(child.scale);
+      if (child.material) gsap.killTweensOf(child.material);
       if (child.material && child.material.map) child.material.map.dispose();
       if (child.material) child.material.dispose();
       this.hudGroup.remove(child);
@@ -631,6 +660,7 @@ export class UIManager {
 
   showMainMenu(stats) {
     this.clear();
+    this.refreshLanguageView = () => this.showMainMenu(stats);
     const highScore =
       stats && stats.highScore !== undefined ? stats.highScore : 0;
 
@@ -644,7 +674,7 @@ export class UIManager {
         ctx.shadowBlur = 4;
         ctx.shadowOffsetY = 4;
         ctx.fillStyle = UI_PALETTE.controlInk;
-        ctx.fillText("HÀNH TRÌNH", w / 2, 44);
+        ctx.fillText(t("menu.journey"), w / 2, 44);
 
         // Small same-hue ornaments give the wordmark a clear horizontal lockup.
         ctx.shadowColor = "transparent";
@@ -701,8 +731,8 @@ export class UIManager {
         ctx.lineWidth = 1.6;
         ctx.shadowColor = "rgba(255, 255, 255, 0.85)";
         ctx.shadowBlur = 4;
-        ctx.strokeText("🏆 KỶ LỤC: " + highScore, w / 2, 270);
-        ctx.fillText("🏆 KỶ LỤC: " + highScore, w / 2, 270);
+        ctx.strokeText(t("menu.best", { score: highScore }), w / 2, 270);
+        ctx.fillText(t("menu.best", { score: highScore }), w / 2, 270);
         ctx.shadowColor = "transparent";
       },
       600,
@@ -726,7 +756,7 @@ export class UIManager {
     this.activeGroup.add(titleSprite);
 
     const playBtn = this.createWideButton(
-      "CHƠI NGAY",
+      t("menu.play"),
       () => {
         if (this.onPlay) this.onPlay();
       },
@@ -760,6 +790,7 @@ export class UIManager {
 
   showSettings(isIngame = false) {
     this.clear();
+    this.refreshLanguageView = () => this.showSettings(isIngame);
     this.injectHTMLPopupStyles();
 
     const existing = document.getElementById("game-settings-overlay-id");
@@ -774,14 +805,14 @@ export class UIManager {
 
     const title = document.createElement("div");
     title.className = "game-popup-title";
-    title.innerText = "CÀI ĐẶT";
+    title.innerText = t("settings.title");
     card.appendChild(title);
 
     if (!isIngame) {
       const closeBtn = document.createElement("button");
       closeBtn.className = "game-popup-close-btn";
       closeBtn.innerText = "✕";
-      closeBtn.setAttribute("aria-label", "Đóng");
+      closeBtn.setAttribute("aria-label", t("actions.close"));
       closeBtn.addEventListener("click", () => {
         this.playClickSound();
         overlay.style.opacity = "0";
@@ -845,7 +876,7 @@ export class UIManager {
     if (this.sfxOn === undefined) this.sfxOn = true;
 
     // Music row
-    const musicRow = createToggleRow("ÂM NHẠC", this.musicOn, () => {
+    const musicRow = createToggleRow(t("settings.music"), this.musicOn, () => {
       this.playClickSound();
       this.musicOn = !this.musicOn;
       if (this.onToggleMusic) this.onToggleMusic(this.musicOn);
@@ -854,13 +885,20 @@ export class UIManager {
     rowContainer.appendChild(musicRow);
 
     // SFX row
-    const sfxRow = createToggleRow("HIỆU ỨNG", this.sfxOn, () => {
+    const sfxRow = createToggleRow(t("settings.sfx"), this.sfxOn, () => {
       this.playClickSound();
       this.sfxOn = !this.sfxOn;
       if (this.onToggleSfx) this.onToggleSfx(this.sfxOn);
       return this.sfxOn;
     });
     rowContainer.appendChild(sfxRow);
+    const languageRow = document.createElement("label");
+    languageRow.style.cssText =
+      "display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 0;color:#403442;font-weight:700;";
+    const languageLabel = document.createElement("span");
+    languageLabel.textContent = t("settings.language");
+    languageRow.append(languageLabel, this.createLanguageSelect());
+    rowContainer.appendChild(languageRow);
 
     card.appendChild(rowContainer);
 
@@ -870,6 +908,7 @@ export class UIManager {
 
       // Home
       const homeBtn = document.createElement("button");
+      homeBtn.setAttribute("aria-label", t("actions.home"));
       homeBtn.className = "game-paused-btn";
       homeBtn.style.backgroundImage = `url(${this.getIconBase64("home")})`;
       homeBtn.addEventListener("click", () => {
@@ -882,6 +921,7 @@ export class UIManager {
 
       // Replay
       const replayBtn = document.createElement("button");
+      replayBtn.setAttribute("aria-label", t("actions.replay"));
       replayBtn.className = "game-paused-btn";
       replayBtn.style.backgroundImage = `url(${this.getIconBase64("replay")})`;
       replayBtn.addEventListener("click", () => {
@@ -893,6 +933,7 @@ export class UIManager {
 
       // Continue
       const continueBtn = document.createElement("button");
+      continueBtn.setAttribute("aria-label", t("actions.resume"));
       continueBtn.className = "game-paused-btn";
       continueBtn.style.backgroundImage = `url(${this.getIconBase64("play")})`;
       continueBtn.addEventListener("click", () => {
@@ -934,7 +975,7 @@ export class UIManager {
 
     const title = document.createElement("div");
     title.className = "game-popup-title";
-    title.innerText = "KẾT THÚC";
+    title.innerText = t("gameover.title");
     card.appendChild(title);
 
     // Emblem Star
@@ -948,7 +989,7 @@ export class UIManager {
     if (isHigh) {
       const newRecord = document.createElement("div");
       newRecord.className = "game-record-badge";
-      newRecord.innerText = "KỶ LỤC MỚI!";
+      newRecord.innerText = t("gameover.record");
       card.appendChild(newRecord);
     }
 
@@ -959,7 +1000,7 @@ export class UIManager {
 
     const msgVal = document.createElement("div");
     msgVal.className = "game-result-message";
-    msgVal.innerText = isHigh ? "HẠNG #1" : "Chúc bạn may mắn lần sau!";
+    msgVal.innerText = isHigh ? t("gameover.top") : t("gameover.encouragement");
     card.appendChild(msgVal);
 
     const actionContainer = document.createElement("div");
@@ -970,6 +1011,7 @@ export class UIManager {
     // x2 score
     if (canDoubleReward) {
       const x2Btn = document.createElement("button");
+      x2Btn.setAttribute("aria-label", t("actions.double"));
       x2Btn.className = "game-paused-btn";
       x2Btn.style.backgroundImage = `url(${this.getIconBase64("x2", "primary")})`;
       x2Btn.addEventListener("click", () => {
@@ -982,6 +1024,7 @@ export class UIManager {
 
     // Replay
     const replayBtn = document.createElement("button");
+    replayBtn.setAttribute("aria-label", t("actions.replay"));
     replayBtn.className = "game-paused-btn";
     replayBtn.style.backgroundImage = `url(${this.getIconBase64("replay", "primary")})`;
     replayBtn.addEventListener("click", () => {
@@ -993,6 +1036,7 @@ export class UIManager {
 
     // Home
     const homeBtn = document.createElement("button");
+    homeBtn.setAttribute("aria-label", t("actions.home"));
     homeBtn.className = "game-paused-btn";
     homeBtn.style.backgroundImage = `url(${this.getIconBase64("home", "primary")})`;
     homeBtn.addEventListener("click", () => {
@@ -1033,12 +1077,12 @@ export class UIManager {
 
     const title = document.createElement("div");
     title.className = "game-popup-title";
-    title.innerText = "HỒI SINH";
+    title.innerText = t("revive.title");
     card.appendChild(title);
 
     const question = document.createElement("div");
     question.className = "game-popup-heading";
-    question.innerText = "Bạn có muốn tiếp tục?";
+    question.innerText = t("revive.question");
     card.appendChild(question);
 
     const heartIcon = document.createElement("div");
@@ -1086,7 +1130,7 @@ export class UIManager {
     yesBtn.appendChild(videoIcon);
 
     const yesText = document.createElement("span");
-    yesText.innerText = "CÓ";
+    yesText.innerText = t("revive.yes");
     yesBtn.appendChild(yesText);
 
     yesBtn.addEventListener("click", () => {
@@ -1098,7 +1142,7 @@ export class UIManager {
 
     const noText = document.createElement("button");
     noText.className = "game-skip-btn";
-    noText.innerText = "Không, cảm ơn";
+    noText.innerText = t("revive.no");
     noText.addEventListener("click", () => {
       this.playClickSound();
       overlay.remove();
@@ -1183,8 +1227,8 @@ export class UIManager {
         ctx.shadowColor = "rgba(82, 55, 37, 0.38)";
         ctx.shadowBlur = 5;
         ctx.shadowOffsetY = 2;
-        ctx.strokeText("CHẠM ĐỂ BẺ LÁI!", w / 2, h / 2);
-        ctx.fillText("CHẠM ĐỂ BẺ LÁI!", w / 2, h / 2);
+        ctx.strokeText(t("hud.tutorial"), w / 2, h / 2);
+        ctx.fillText(t("hud.tutorial"), w / 2, h / 2);
       },
       400,
       60,
@@ -1269,13 +1313,13 @@ export class UIManager {
 
     const title = document.createElement("div");
     title.className = "game-popup-title";
-    title.innerText = "BẢNG VÀNG";
+    title.innerText = t("leaderboard.title");
     card.appendChild(title);
 
     const closeBtn = document.createElement("button");
     closeBtn.className = "game-popup-close-btn";
     closeBtn.innerText = "✕";
-    closeBtn.setAttribute("aria-label", "Đóng");
+    closeBtn.setAttribute("aria-label", t("actions.close"));
     closeBtn.addEventListener("click", () => {
       this.playClickSound();
       overlay.style.opacity = "0";
@@ -1292,30 +1336,30 @@ export class UIManager {
     const userText = document.createElement("div");
     userText.className = "game-achievements-user-text";
     userText.innerText = effUser
-      ? `Tài khoản: ${effUser.name} (Đã đăng nhập)`
-      : "Tài khoản: Khách (Điểm lưu thiết bị)";
+      ? t("account.signedIn", { name: effUser.name })
+      : winkGame?.isAuthenticated
+        ? t("account.memberSignedIn")
+        : t("account.guest");
     card.appendChild(userText);
 
     const personalScore = stats?.highScore || 0;
-    const playerName = effUser ? effUser.name : "Bạn (Khách)";
+    const playerName = effUser
+      ? effUser.name
+      : winkGame?.isAuthenticated
+        ? t("account.member")
+        : t("account.you");
 
-    const rankings =
+    const defaultRankings =
       personalScore > 0
         ? [
             {
               name: playerName,
               score: personalScore,
               isPlayer: true,
+              medal: "🥇",
             },
           ]
         : [];
-
-    rankings.forEach((r, i) => {
-      if (i === 0) r.medal = "🥇";
-      else if (i === 1) r.medal = "🥈";
-      else if (i === 2) r.medal = "🥉";
-      else r.medal = (i + 1).toString();
-    });
 
     const tableContainer = document.createElement("div");
     tableContainer.className = "game-achievements-table-container";
@@ -1326,34 +1370,47 @@ export class UIManager {
     const thead = document.createElement("thead");
     thead.innerHTML = `
       <tr>
-        <th style="text-align: left; padding-left: 10px;">HẠNG</th>
-        <th style="text-align: center;">TÊN</th>
-        <th aria-label="Điểm số" style="text-align: right; padding-right: 10px;">#</th>
+        <th style="text-align: left; padding-left: 10px;">${t("leaderboard.rank")}</th>
+        <th style="text-align: center;">${t("leaderboard.name")}</th>
+        <th aria-label="${t("leaderboard.score")}" style="text-align: right; padding-right: 10px;">#</th>
       </tr>
     `;
     table.appendChild(thead);
 
     const tbody = document.createElement("tbody");
-    if (rankings.length === 0) {
-      const emptyRow = document.createElement("tr");
-      emptyRow.innerHTML =
-        '<td colspan="3" style="padding:24px;text-align:center;">Chưa có thành tích. Hãy chơi để thiết lập kỷ lục đầu tiên.</td>';
-      tbody.appendChild(emptyRow);
-    }
-    rankings.forEach((r, i) => {
-      const row = document.createElement("tr");
-      if (i < 3) row.className = `rank-${i}`;
-      if (r.isPlayer) row.classList.add("highlighted");
-      row.innerHTML = `
-        <td style="text-align: left; padding-left: 20px;">${r.medal}</td>
-        <td style="text-align: center;">${r.name}</td>
-        <td style="text-align: right; padding-right: 10px;">${r.score}</td>
-      `;
-      tbody.appendChild(row);
-    });
     table.appendChild(tbody);
     tableContainer.appendChild(table);
     card.appendChild(tableContainer);
+
+    const renderTable = (rankings) => {
+      tbody.innerHTML = "";
+      if (!rankings || rankings.length === 0) {
+        const emptyRow = document.createElement("tr");
+        emptyRow.innerHTML = `<td colspan="3" style="padding:24px;text-align:center;">${t("leaderboard.empty")}</td>`;
+        tbody.appendChild(emptyRow);
+        return;
+      }
+      rankings.forEach((r, i) => {
+        const row = document.createElement("tr");
+        if (i < 3) row.className = `rank-${i}`;
+        if (r.isPlayer) row.classList.add("highlighted");
+        const medal =
+          r.medal ||
+          (i === 0
+            ? "🥇"
+            : i === 1
+              ? "🥈"
+              : i === 2
+                ? "🥉"
+                : (i + 1).toString());
+        row.innerHTML = `
+          <td style="text-align: left; padding-left: 20px;">${medal}</td>
+          <td style="text-align: center;">${r.name}</td>
+          <td style="text-align: right; padding-right: 10px;">${r.score}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    };
 
     // Personal Best Footer
     const footer = document.createElement("div");
@@ -1362,16 +1419,84 @@ export class UIManager {
     const rankItem = document.createElement("div");
     rankItem.className = "game-achievements-footer-item";
     rankItem.style.width = "50%";
-    rankItem.innerText = `PB: ${playerName}`;
     footer.appendChild(rankItem);
 
     const scoreItem = document.createElement("div");
     scoreItem.className = "game-achievements-footer-item";
     scoreItem.style.width = "50%";
-    scoreItem.innerText = String(personalScore);
     footer.appendChild(scoreItem);
 
     card.appendChild(footer);
+
+    const updateFooter = (pb) => {
+      const activeUser = getEffectiveUser();
+      const pName =
+        pb?.displayName ||
+        (activeUser
+          ? activeUser.name
+          : winkGame?.isAuthenticated
+            ? t("account.member")
+            : t("account.you"));
+      const pScore =
+        pb?.score !== undefined && pb?.score !== null
+          ? pb.score
+          : personalScore;
+      const rankStr = pb?.rank ? `#${pb.rank}` : pScore > 0 ? "PB" : "—";
+
+      userText.innerText = activeUser
+        ? t("account.signedIn", { name: activeUser.name })
+        : winkGame?.isAuthenticated
+          ? t("account.memberSignedIn")
+          : t("account.guest");
+
+      rankItem.innerText = `${rankStr}: ${pName}`;
+      scoreItem.innerText = String(pScore);
+    };
+
+    // Initial render
+    renderTable(defaultRankings);
+    updateFooter(winkGame?.personalBest);
+
+    // Async fetch from Wink API
+    if (winkGame) {
+      Promise.all([
+        winkGame.refreshLeaderboard({ limit: 10 }),
+        winkGame.getPersonalBest(),
+      ])
+        .then(([lbRes, pbRes]) => {
+          if (
+            lbRes &&
+            Array.isArray(lbRes.entries) &&
+            lbRes.entries.length > 0
+          ) {
+            const apiRankings = lbRes.entries.map((item, idx) => ({
+              name:
+                item.displayName ||
+                item.name ||
+                `${t("account.member")} #${item.rank || idx + 1}`,
+              score: item.score || 0,
+              medal:
+                (item.rank || idx + 1) === 1
+                  ? "🥇"
+                  : (item.rank || idx + 1) === 2
+                    ? "🥈"
+                    : (item.rank || idx + 1) === 3
+                      ? "🥉"
+                      : (item.rank || idx + 1).toString(),
+              isPlayer:
+                item.userId &&
+                pbRes?.me?.userId &&
+                item.userId === pbRes.me.userId,
+            }));
+            renderTable(apiRankings);
+          }
+          const activePb = pbRes?.me || lbRes?.me || winkGame.personalBest;
+          updateFooter(activePb);
+        })
+        .catch(() => {
+          // Fallback already rendered
+        });
+    }
 
     overlay.appendChild(card);
     const appContainer = document.getElementById("app") || document.body;
