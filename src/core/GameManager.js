@@ -191,8 +191,9 @@ export class GameManager {
     if (this.state === "MAIN_MENU") {
       this.ui.showMainMenu(getStats());
     } else if (this.state === "PLAYING") {
-      this.ui.showHUD();
-      this.ui.updateHUD(this.score, this.coinsThisRun);
+      // Resize the existing HUD in place. Rebuilding it here restarts the
+      // tutorial blink and causes a visible flash after resuming Settings.
+      this.ui.resizeHUD(w, h);
     }
   }
 

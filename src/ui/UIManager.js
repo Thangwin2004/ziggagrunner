@@ -104,6 +104,8 @@ export class UIManager {
     this.scene.add(this.hudGroup);
 
     this.scoreSprite = null;
+    this.hudSettingsButton = null;
+    this.hudTutorialSprite = null;
     i18n.subscribe(() => this.refreshLanguageView?.());
 
     domElement.addEventListener("pointermove", this.onPointerMove.bind(this));
@@ -216,6 +218,9 @@ export class UIManager {
 
   clear() {
     this.refreshLanguageView = null;
+    this.hoveredObject = null;
+    this.isHoveringUI = false;
+    document.body.style.cursor = "default";
     // Clear HTML popups
     const settings = document.getElementById("game-settings-overlay-id");
     if (settings) settings.remove();
@@ -242,6 +247,9 @@ export class UIManager {
       if (child.material) child.material.dispose();
       this.hudGroup.remove(child);
     }
+    this.scoreSprite = null;
+    this.hudSettingsButton = null;
+    this.hudTutorialSprite = null;
     this.interactiveObjects = [];
   }
 
@@ -1212,6 +1220,7 @@ export class UIManager {
       0,
     );
     this.hudGroup.add(settingsBtn);
+    this.hudSettingsButton = settingsBtn;
 
     // Tutorial Text (Center Screen)
     const tutTex = this.createTextureFromCanvas(
@@ -1237,6 +1246,7 @@ export class UIManager {
     tutSprite.scale.set(400, 60, 1);
     tutSprite.position.set(0, window.innerHeight / 2 - 120, 0);
     this.hudGroup.add(tutSprite);
+    this.hudTutorialSprite = tutSprite;
 
     // Blink and fade out
     gsap.to(tutSprite.material, {
@@ -1251,10 +1261,23 @@ export class UIManager {
       delay: 3,
       onComplete: () => {
         this.hudGroup.remove(tutSprite);
+        if (this.hudTutorialSprite === tutSprite) this.hudTutorialSprite = null;
         if (tutSprite.material.map) tutSprite.material.map.dispose();
         tutSprite.material.dispose();
       },
     });
+  }
+
+  resizeHUD(width = window.innerWidth, height = window.innerHeight) {
+    if (this.scoreSprite) {
+      this.scoreSprite.position.set(-width / 2 + 120, height / 2 - 40, 0);
+    }
+    if (this.hudSettingsButton) {
+      this.hudSettingsButton.position.set(width / 2 - 50, height / 2 - 50, 0);
+    }
+    if (this.hudTutorialSprite) {
+      this.hudTutorialSprite.position.set(0, height / 2 - 120, 0);
+    }
   }
 
   updateHUD(score) {
