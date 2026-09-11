@@ -7,15 +7,7 @@ export default [
   // Note: the .eslintignore beside this file is dead — ESLint 9 flat config
   // does not read it, which is why these ignores must live here.
   {
-    ignores: [
-      "dist",
-      "public",
-      "public/**",
-      "**/wink-bridge.js",
-      "**/build-wink-warm.mjs",
-      ".worktrees",
-      ".worktrees/**",
-    ],
+    ignores: ["dist", "public", "public/**", ".worktrees", ".worktrees/**"],
   },
   js.configs.recommended,
   prettier,

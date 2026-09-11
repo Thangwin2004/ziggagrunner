@@ -1,4 +1,4 @@
-import { t } from "./system/I18nManager.js";
+import { i18n, t } from "./system/I18nManager.js";
 import * as THREE from "three";
 import { GameManager } from "./core/GameManager.js";
 import { winkGame } from "./integrations/wink/wink-adapter.js";
@@ -104,22 +104,17 @@ async function initializeGame() {
     resumeAudio: () => game?.audio.resumeFromFocus(),
   });
 
-  // ── Wink Bridge lifecycle binding ──
+  // ── Wink SDK lifecycle binding ──
   winkGame.bindLifecycle({
     onPause: focusPause.pauseFromHost,
     onResume: focusPause.resumeFromHost,
-    onMute: () => {
-      if (game) game.audio.setBGMEnabled(false);
-      game?.audio.setSFXEnabled(false);
-    },
-    onUnmute: () => {
-      if (game) game.audio.setBGMEnabled(true);
-      game?.audio.setSFXEnabled(true);
-    },
+    onMute: () => game?.audio.setHostMuted(true),
+    onUnmute: () => game?.audio.setHostMuted(false),
   });
 
   winkGame.observe((state) => {
-    console.log("[WinkBridge] phase:", state.phase);
+    const locale = state.locale === "vi" ? "vi" : "en";
+    i18n.setLanguage(locale);
   });
 }
 

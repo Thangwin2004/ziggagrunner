@@ -12,6 +12,7 @@ export class AudioManager {
     // States
     this.isBgmEnabled = true;
     this.isSfxEnabled = true;
+    this.isHostMuted = false;
 
     this.buffers = {};
     this.runSource = null;
@@ -37,7 +38,7 @@ export class AudioManager {
       const audioBuffer = await this.ctx.decodeAudioData(arrayBuffer);
       this.buffers[this.bgmBufferName] = audioBuffer;
 
-      if (this.isBgmEnabled && !this.bgmSource) {
+      if (this.isBgmEnabled && !this.isHostMuted && !this.bgmSource) {
         this.playBGM();
       }
     } catch (e) {
@@ -66,6 +67,7 @@ export class AudioManager {
   }
 
   playSound(name, loop = false, volume = 1.0) {
+    if (!this.isSfxEnabled || this.isHostMuted) return null;
     this.resumeContext();
     if (!this.buffers[name]) return null;
 
@@ -84,6 +86,7 @@ export class AudioManager {
   }
 
   playBGM() {
+    if (!this.isBgmEnabled || this.isHostMuted) return;
     this.resumeContext();
     if (!this.buffers[this.bgmBufferName]) return; // Not loaded yet
     if (this.bgmSource) return; // Already playing
@@ -109,8 +112,8 @@ export class AudioManager {
 
   setBGMEnabled(enabled) {
     this.isBgmEnabled = enabled;
-    this.bgmGain.gain.value = enabled ? 0.08 : 0;
-    if (enabled) {
+    this.bgmGain.gain.value = enabled && !this.isHostMuted ? 0.08 : 0;
+    if (enabled && !this.isHostMuted) {
       this.playBGM();
     } else {
       this.stopBGM();
@@ -119,7 +122,18 @@ export class AudioManager {
 
   setSFXEnabled(enabled) {
     this.isSfxEnabled = enabled;
-    this.sfxGain.gain.value = enabled ? 1 : 0;
+    this.sfxGain.gain.value = enabled && !this.isHostMuted ? 1 : 0;
+  }
+
+  setHostMuted(muted) {
+    this.isHostMuted = Boolean(muted);
+    this.bgmGain.gain.value = this.isBgmEnabled && !this.isHostMuted ? 0.08 : 0;
+    this.sfxGain.gain.value = this.isSfxEnabled && !this.isHostMuted ? 1 : 0;
+    if (this.isHostMuted) {
+      this.stopBGM();
+    } else if (this.isBgmEnabled) {
+      this.playBGM();
+    }
   }
 
   async pauseForFocus() {

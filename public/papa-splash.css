@@ -1,0 +1,108 @@
+#papa-studio-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 44%, rgba(245, 124, 0, 0.15), transparent 38%),
+    #0a0b1e;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 0.45s ease,
+    visibility 0s linear 0.45s;
+}
+
+#papa-studio-splash.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.papa-studio-splash-logo {
+  display: block;
+  width: clamp(150px, 42vw, 240px);
+  height: auto;
+  margin: 0 0 30px;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.35));
+  animation:
+    papaStudioLogoEnter 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both,
+    papaStudioLogoBreathe 1.6s ease-in-out 0.55s infinite alternate;
+}
+
+.papa-studio-progress-track {
+  width: min(76vw, 300px);
+  height: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.papa-studio-progress-fill {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ff8a00, #ffd200);
+  box-shadow: 0 0 12px rgba(255, 174, 0, 0.55);
+  transform: scaleX(0.04);
+  transform-origin: left center;
+  animation: papaStudioProgress 3.8s cubic-bezier(0.16, 0.7, 0.22, 1) forwards;
+}
+
+#papa-studio-splash.is-ready .papa-studio-progress-fill {
+  animation: none;
+  transform: scaleX(1);
+  transition: transform 0.16s ease-out;
+}
+
+@keyframes papaStudioLogoEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes papaStudioLogoBreathe {
+  to {
+    transform: scale(1.025);
+    filter: drop-shadow(0 10px 24px rgba(245, 124, 0, 0.28));
+  }
+}
+
+@keyframes papaStudioProgress {
+  to {
+    transform: scaleX(0.92);
+  }
+}
+
+@media (max-height: 520px) {
+  .papa-studio-splash-logo {
+    width: clamp(120px, 34vw, 180px);
+    margin-bottom: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .papa-studio-splash-logo {
+    animation: none;
+  }
+
+  .papa-studio-progress-fill {
+    animation: none;
+    transform: scaleX(0.35);
+  }
+}

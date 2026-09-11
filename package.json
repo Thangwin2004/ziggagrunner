@@ -5,12 +5,12 @@
   "type": "module",
   "scripts": {
     "start": "pnpm run dev",
-    "prebuild": "pnpm run verify:wink-bridge",
-    "build": "pnpm run lint && vite build && node scripts/build-wink-warm.mjs",
+    "prebuild": "npm run verify:wink-sdk",
+    "build": "npm run lint && vite build",
     "postbuild": "node scripts/prune-unused-public-assets.mjs",
     "lint": "eslint .",
     "dev": "vite",
-    "verify:wink-bridge": "node scripts/verify-wink-bridge.mjs"
+    "verify:wink-sdk": "node scripts/verify-wink-sdk.mjs"
   },
   "packageManager": "pnpm@10.28.2",
   "engines": {

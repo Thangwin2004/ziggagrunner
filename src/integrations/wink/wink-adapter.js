@@ -1,202 +1,329 @@
-/**
- * WinkGameIntegration — JS port of client.ts adapter
- *
- * The single Wink adapter for this game. Everything the game needs from the
- * platform goes through here, using only the public window.WinkBridge surface.
- *
- * Rules enforced:
- *   1. One stable round id per semantic round
- *   2. Completion is reported exactly once per round
- *   3. Completion and score submission stay independent
- *   4. Score submission is capability-aware and never silently faked
- */
+const EMPTY_LEADERBOARD = Object.freeze({ entries: [], me: null, total: 0 });
 
-import {
-  complete,
-  getCapabilities,
-  getLeaderboard,
-  getPersonalBest,
-  getState,
-  onMute,
-  onPause,
-  onResume,
-  onUnmute,
-  submitScore,
-  subscribe,
-} from "./wink-bridge.js";
+function createCapabilityError(capability) {
+  const error = new Error(`Wink capability is unavailable: ${capability}`);
+  error.code = "CAPABILITY_DENIED";
+  return error;
+}
+
+function readErrorCode(error) {
+  return error && typeof error === "object" && "code" in error
+    ? String(error.code)
+    : "UNKNOWN";
+}
 
 function newRoundId() {
-  const cryptoRef = globalThis.crypto;
-  if (cryptoRef && typeof cryptoRef.randomUUID === "function") {
-    return cryptoRef.randomUUID();
-  }
+  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
   const random = Math.random().toString(16).slice(2, 10);
   return `round-${Date.now().toString(16)}-${random}`;
 }
 
+function normalizeScoreInput(input) {
+  const value = typeof input === "number" ? { score: input } : { ...input };
+  value.score = Math.max(0, Math.floor(Number(value.score) || 0));
+  if (value.playTime !== undefined) {
+    value.playTime = Math.max(0, Math.floor(Number(value.playTime) || 0));
+  }
+  if (value.counter !== undefined) {
+    value.counter = Math.max(0, Math.floor(Number(value.counter) || 0));
+  }
+  return value;
+}
+
 export class WinkGameIntegration {
-  /** @type {Set<string>} */
+  #sdk = null;
+  #ready;
+  #destroyed = false;
   #completedRounds = new Set();
-
-  /** @type {Array<() => void>} */
+  #scoreAttemptedRounds = new Set();
+  #activeRoundId = null;
   #disposers = [];
-
-  /** @type {object | null} */
+  #observers = new Set();
   #cachedPersonalBest = null;
+  #state = {
+    phase: "booting",
+    status: "connecting",
+    locale: "en",
+    player: null,
+    capabilities: {
+      getLeaderboard: false,
+      submitScore: false,
+      complete: false,
+    },
+    lifecycle: { paused: false, muted: false },
+    error: null,
+  };
 
   constructor() {
-    this.observe((state) => {
-      if (state?.phase === "ready_authenticated" && !this.#cachedPersonalBest) {
-        this.getPersonalBest().catch(() => {});
+    this.#ready = this.#initialize();
+    void this.#ready.then((sdk) => {
+      if (sdk?.can?.("getLeaderboard")) {
+        void this.getPersonalBest();
       }
     });
   }
 
-  /**
-   * Open a new semantic round. Keep the returned handle for the whole round —
-   * including through any revive, bonus, or continue step — so completion and
-   * score refer to the same round id.
-   * @returns {{ roundId: string, startedAtMs: number }}
-   */
-  startRound() {
-    return Object.freeze({
-      roundId: newRoundId(),
-      startedAtMs: Date.now(),
+  async #initialize() {
+    const sdkLoader = globalThis.window?.Wink;
+    if (!sdkLoader?.init) {
+      this.#setStandalone("SDK_UNAVAILABLE");
+      return null;
+    }
+
+    try {
+      const sdk = await sdkLoader.init();
+      if (this.#destroyed) {
+        sdk?.destroy?.();
+        return null;
+      }
+
+      this.#sdk = sdk;
+      this.#state = this.#readSdkState();
+      this.#subscribeToSdkEvents();
+      this.#notify();
+      return sdk;
+    } catch (error) {
+      console.warn("[Wink SDK] init failed", readErrorCode(error));
+      this.#setStandalone(readErrorCode(error));
+      return null;
+    }
+  }
+
+  #readSdkState() {
+    const sdk = this.#sdk;
+    const status = sdk?.status || "standalone";
+    const capabilities = {
+      getLeaderboard: Boolean(sdk?.can?.("getLeaderboard")),
+      submitScore: Boolean(sdk?.can?.("submitScore")),
+      complete: Boolean(sdk?.can?.("complete")),
+    };
+    const authenticated = Boolean(sdk?.player && capabilities.submitScore);
+
+    return {
+      ...this.#state,
+      phase:
+        status === "connecting"
+          ? "booting"
+          : authenticated
+            ? "ready_authenticated"
+            : "ready_anonymous",
+      status,
+      locale: sdk?.locale || this.#state.locale || "en",
+      player: sdk?.player || null,
+      capabilities,
+      lifecycle: {
+        ...this.#state.lifecycle,
+        muted: Boolean(sdk?.muted),
+      },
+      error: null,
+    };
+  }
+
+  #setStandalone(errorCode = null) {
+    this.#state = {
+      ...this.#state,
+      phase: "ready_anonymous",
+      status: "standalone",
+      error: errorCode ? { code: errorCode } : null,
+    };
+    this.#notify();
+  }
+
+  #subscribeToSdkEvents() {
+    const sdk = this.#sdk;
+    if (!sdk?.on) return;
+
+    const register = (event, listener) => {
+      try {
+        const off = sdk.on(event, listener);
+        if (typeof off === "function") this.#disposers.push(off);
+      } catch (error) {
+        console.warn(
+          `[Wink SDK] ${event} listener failed`,
+          readErrorCode(error),
+        );
+      }
+    };
+
+    register("pause", () => {
+      this.#state.lifecycle.paused = true;
+      this.#notify();
+    });
+    register("resume", () => {
+      this.#state.lifecycle.paused = false;
+      this.#notify();
+    });
+    register("mute", () => {
+      this.#state.lifecycle.muted = true;
+      this.#notify();
+    });
+    register("unmute", () => {
+      this.#state.lifecycle.muted = false;
+      this.#notify();
+    });
+    register("locale", (locale) => {
+      this.#state.locale = String(locale || sdk.locale || "en");
+      this.#notify();
     });
   }
 
-  /**
-   * Report the semantic end of a round. Safe to call more than once: only the
-   * first call per round reaches the parent. This never submits a score.
-   * @param {{ roundId: string, startedAtMs: number }} round
-   * @param {{ playDurationMs?: number, metadata?: object }} [extra]
-   * @returns {boolean}
-   */
-  completeRound(round, extra = {}) {
-    if (this.#completedRounds.has(round.roundId)) return false;
-    this.#completedRounds.add(round.roundId);
-
-    if (!this.capabilities.complete) return false;
-
-    const { playDurationMs, ...rest } = extra;
-    try {
-      complete({
-        roundId: round.roundId,
-        playDurationMs: Math.max(
-          0,
-          Math.round(playDurationMs ?? Date.now() - round.startedAtMs),
-        ),
-        ...rest,
-      });
-    } catch (err) {
-      console.warn("[Wink] complete() failed:", err.message);
+  #notify() {
+    for (const observer of this.#observers) {
+      try {
+        observer(this.#state);
+      } catch (error) {
+        console.warn("[Wink SDK] state observer failed", readErrorCode(error));
+      }
     }
+  }
+
+  startRound() {
+    const round = Object.freeze({
+      roundId: newRoundId(),
+      startedAtMs: Date.now(),
+    });
+    this.#activeRoundId = round.roundId;
+    void this.#ready.then((sdk) => sdk?.gameplayStart?.());
+    return round;
+  }
+
+  completeRound(round) {
+    if (!round?.roundId || this.#completedRounds.has(round.roundId))
+      return false;
+    this.#completedRounds.add(round.roundId);
+    void this.#ready.then((sdk) => sdk?.gameplayStop?.());
     return true;
   }
 
-  /**
-   * Submit the final qualifying score. Anonymous players get CAPABILITY_DENIED.
-   * @param {{ score: number, playTime?: number, gameMode?: string, counter?: number, metadata?: object }} input
-   * @returns {Promise<{ entry: object, isNewBest: boolean, previousBest: number|null }>}
-   */
   async submitFinalScore(input) {
-    const res = await submitScore(input);
-    if (res?.entry) {
-      this.#cachedPersonalBest = res.entry;
+    const roundId = this.#activeRoundId;
+    if (roundId && this.#scoreAttemptedRounds.has(roundId)) {
+      return { duplicate: true };
     }
-    return res;
+    if (roundId) this.#scoreAttemptedRounds.add(roundId);
+    const sdk = await this.#ready;
+    if (!sdk?.can?.("submitScore")) throw createCapabilityError("submitScore");
+
+    try {
+      const result = await sdk.submitScore(normalizeScoreInput(input));
+      if (result?.entry) this.#cachedPersonalBest = result.entry;
+      return result;
+    } catch (error) {
+      console.warn("[Wink SDK] score submission failed", readErrorCode(error));
+      throw error;
+    }
   }
 
-  /**
-   * Refresh the leaderboard.
-   * @param {{ limit?: number, offset?: number }} [options]
-   * @returns {Promise<{ entries: Array, total: number, me?: object|null }>}
-   */
-  async refreshLeaderboard(options) {
-    const res = await getLeaderboard(options);
-    if (res?.me) {
-      this.#cachedPersonalBest = res.me;
+  async refreshLeaderboard(options = {}) {
+    const sdk = await this.#ready;
+    if (!sdk?.can?.("getLeaderboard")) return { ...EMPTY_LEADERBOARD };
+
+    try {
+      const result = await sdk.getLeaderboard(options);
+      if (result?.me) this.#cachedPersonalBest = result.me;
+      return result || { ...EMPTY_LEADERBOARD };
+    } catch (error) {
+      console.warn("[Wink SDK] leaderboard unavailable", readErrorCode(error));
+      return { ...EMPTY_LEADERBOARD };
     }
-    return res;
   }
 
-  /**
-   * Get the personal best of current player.
-   * @returns {Promise<{ me: object | null }>}
-   */
   async getPersonalBest() {
-    const res = await getPersonalBest();
-    if (res?.me) {
-      this.#cachedPersonalBest = res.me;
+    const sdk = await this.#ready;
+    if (!sdk?.getPersonalBest) return { me: null };
+
+    try {
+      const result = await sdk.getPersonalBest();
+      if (result?.me) this.#cachedPersonalBest = result.me;
+      return result || { me: null };
+    } catch (error) {
+      console.warn(
+        "[Wink SDK] personal best unavailable",
+        readErrorCode(error),
+      );
+      return { me: null };
     }
-    return res;
   }
 
-  /** @returns {object | null} */
   get personalBest() {
     return this.#cachedPersonalBest;
   }
 
-  /** @returns {{ getLeaderboard: boolean, submitScore: boolean, complete: boolean }} */
   get capabilities() {
-    return getCapabilities();
+    return this.#state.capabilities;
   }
 
-  /** @returns {object | null} */
   get state() {
-    return getState();
+    return this.#state;
   }
 
-  /** True when the current identity may persist a score. */
   get canSubmitScore() {
-    return this.capabilities.submitScore === true;
+    return this.capabilities.submitScore;
   }
 
-  /** True when bridge is ready (anonymous or authenticated). */
   get isReady() {
-    const s = this.state;
-    return s?.phase === "ready_anonymous" || s?.phase === "ready_authenticated";
+    return (
+      this.#state.phase === "ready_anonymous" ||
+      this.#state.phase === "ready_authenticated"
+    );
   }
 
-  /** True when user is authenticated (can submit scores). */
   get isAuthenticated() {
-    return this.state?.phase === "ready_authenticated";
+    return this.#state.phase === "ready_authenticated";
   }
 
-  /**
-   * Observe bridge state changes.
-   * @param {(state: object) => void} listener
-   * @returns {() => void}
-   */
   observe(listener) {
-    const stop = subscribe(listener);
+    this.#observers.add(listener);
+    listener(this.#state);
+    const stop = () => this.#observers.delete(listener);
     this.#disposers.push(stop);
     return stop;
   }
 
-  /**
-   * Bind the parent's pause/resume and mute/unmute signals to the game.
-   * @param {{ onPause?: () => void, onResume?: () => void, onMute?: () => void, onUnmute?: () => void }} handlers
-   * @returns {() => void}
-   */
-  bindLifecycle(handlers) {
+  bindLifecycle(handlers = {}) {
+    let active = true;
     const stops = [];
-    if (handlers.onPause) stops.push(onPause(handlers.onPause));
-    if (handlers.onResume) stops.push(onResume(handlers.onResume));
-    if (handlers.onMute) stops.push(onMute(handlers.onMute));
-    if (handlers.onUnmute) stops.push(onUnmute(handlers.onUnmute));
 
-    const stopAll = () => stops.forEach((stop) => stop());
+    void this.#ready.then((sdk) => {
+      if (!active || !sdk?.on) return;
+      const register = (event, listener) => {
+        if (!listener) return;
+        const off = sdk.on(event, listener);
+        if (typeof off === "function") stops.push(off);
+      };
+      register("pause", handlers.onPause);
+      register("resume", handlers.onResume);
+      register("mute", handlers.onMute);
+      register("unmute", handlers.onUnmute);
+      register("locale", handlers.onLocale);
+
+      if (sdk.muted) handlers.onMute?.();
+      else handlers.onUnmute?.();
+      handlers.onLocale?.(sdk.locale);
+    });
+
+    const stopAll = () => {
+      active = false;
+      for (const stop of stops.splice(0)) stop();
+    };
     this.#disposers.push(stopAll);
     return stopAll;
   }
 
   dispose() {
-    this.#disposers.forEach((stop) => stop());
-    this.#disposers = [];
+    this.#destroyed = true;
+    for (const stop of this.#disposers.splice(0)) stop();
+    this.#observers.clear();
     this.#completedRounds.clear();
+    this.#scoreAttemptedRounds.clear();
+    this.#activeRoundId = null;
+    this.#sdk?.destroy?.();
+    this.#sdk = null;
   }
 }
 
-/** Singleton instance for the game */
 export const winkGame = new WinkGameIntegration();
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => winkGame.dispose());
+}
