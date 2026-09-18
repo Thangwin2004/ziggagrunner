@@ -112,9 +112,8 @@ async function initializeGame() {
     onUnmute: () => game?.audio.setHostMuted(false),
   });
 
-  winkGame.observe((state) => {
-    const locale = state.locale === "vi" ? "vi" : "en";
-    i18n.setLanguage(locale);
+  winkGame.observe(() => {
+    document.documentElement.lang = i18n.language;
   });
 }
 
