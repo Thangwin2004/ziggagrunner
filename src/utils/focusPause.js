@@ -48,6 +48,9 @@ export function installFocusPause({
   };
   const handleBlur = () => pauseFor("focus");
   const handleFocus = () => resumeFor("focus");
+  const handleInteraction = () => {
+    if (document.hasFocus()) resumeFor("focus");
+  };
   const handlePageHide = () => pauseFor("page");
   const handlePageShow = () => resumeFor("page");
   const viewportObserver =
@@ -67,13 +70,17 @@ export function installFocusPause({
   document.addEventListener("visibilitychange", handleVisibility);
   window.addEventListener("blur", handleBlur);
   window.addEventListener("focus", handleFocus);
+  window.addEventListener("pointerdown", handleInteraction, { passive: true });
+  window.addEventListener("touchstart", handleInteraction, { passive: true });
   window.addEventListener("pagehide", handlePageHide);
   window.addEventListener("pageshow", handlePageShow);
   viewportObserver?.observe(document.documentElement);
 
   if (document.visibilityState === "hidden") pauseFor("visibility");
+  if (!document.hasFocus()) pauseFor("focus");
 
   return {
+    isPaused: () => pauseReasons.size > 0,
     pauseFromHost: () => pauseFor("host"),
     resumeFromHost: () => resumeFor("host"),
     destroy: () => {
@@ -81,6 +88,8 @@ export function installFocusPause({
       document.removeEventListener("visibilitychange", handleVisibility);
       window.removeEventListener("blur", handleBlur);
       window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("pointerdown", handleInteraction);
+      window.removeEventListener("touchstart", handleInteraction);
       window.removeEventListener("pagehide", handlePageHide);
       window.removeEventListener("pageshow", handlePageShow);
       viewportObserver?.disconnect();

@@ -13,6 +13,9 @@ export class AudioManager {
     this.isBgmEnabled = true;
     this.isSfxEnabled = true;
     this.isHostMuted = false;
+    this.isPaused = false;
+    this.hasUserInteracted = false;
+    this.wantsBgm = true;
 
     this.buffers = {};
     this.runSource = null;
@@ -21,13 +24,39 @@ export class AudioManager {
     this.bgmSource = null;
     this.bgmGain.gain.value = 0.08; // Base volume for BGM
 
+    // Activation listeners for unlocking audio when frame becomes active
+    const activateAudio = () => {
+      this.hasUserInteracted = true;
+      this.resumeContext();
+      if (this.wantsBgm && this.isBgmEnabled && this.canPlayAudio()) {
+        this.playBGM();
+      }
+    };
+    window.addEventListener("pointerdown", activateAudio, { passive: true });
+    window.addEventListener("touchstart", activateAudio, { passive: true });
+    window.addEventListener("keydown", activateAudio, { passive: true });
+    window.addEventListener("focus", () => {
+      if (this.wantsBgm && this.isBgmEnabled && this.canPlayAudio()) {
+        this.playBGM();
+      }
+    });
+
     this.loadBGM();
     this.loadSFX();
   }
 
+  canPlayAudio() {
+    if (this.isHostMuted || this.isPaused) return false;
+    const inIframe = window.self !== window.top;
+    if (inIframe && !this.hasUserInteracted && !document.hasFocus()) {
+      return false;
+    }
+    return true;
+  }
+
   resumeContext() {
     if (this.ctx.state === "suspended") {
-      this.ctx.resume();
+      this.ctx.resume().catch(() => {});
     }
   }
 
@@ -38,7 +67,7 @@ export class AudioManager {
       const audioBuffer = await this.ctx.decodeAudioData(arrayBuffer);
       this.buffers[this.bgmBufferName] = audioBuffer;
 
-      if (this.isBgmEnabled && !this.isHostMuted && !this.bgmSource) {
+      if (this.isBgmEnabled && !this.bgmSource && this.canPlayAudio()) {
         this.playBGM();
       }
     } catch (e) {
@@ -67,7 +96,7 @@ export class AudioManager {
   }
 
   playSound(name, loop = false, volume = 1.0) {
-    if (!this.isSfxEnabled || this.isHostMuted) return null;
+    if (!this.isSfxEnabled || this.isHostMuted || this.isPaused) return null;
     this.resumeContext();
     if (!this.buffers[name]) return null;
 
@@ -86,7 +115,8 @@ export class AudioManager {
   }
 
   playBGM() {
-    if (!this.isBgmEnabled || this.isHostMuted) return;
+    this.wantsBgm = true;
+    if (!this.isBgmEnabled || !this.canPlayAudio()) return;
     this.resumeContext();
     if (!this.buffers[this.bgmBufferName]) return; // Not loaded yet
     if (this.bgmSource) return; // Already playing
@@ -113,7 +143,7 @@ export class AudioManager {
   setBGMEnabled(enabled) {
     this.isBgmEnabled = enabled;
     this.bgmGain.gain.value = enabled && !this.isHostMuted ? 0.08 : 0;
-    if (enabled && !this.isHostMuted) {
+    if (enabled && !this.isHostMuted && this.canPlayAudio()) {
       this.playBGM();
     } else {
       this.stopBGM();
@@ -131,19 +161,25 @@ export class AudioManager {
     this.sfxGain.gain.value = this.isSfxEnabled && !this.isHostMuted ? 1 : 0;
     if (this.isHostMuted) {
       this.stopBGM();
-    } else if (this.isBgmEnabled) {
+    } else if (this.wantsBgm && this.isBgmEnabled && this.canPlayAudio()) {
       this.playBGM();
     }
   }
 
   async pauseForFocus() {
+    this.isPaused = true;
+    this.stopBGM();
     this.wasContextRunningBeforeFocus = this.ctx?.state === "running";
     if (this.wasContextRunningBeforeFocus) await this.ctx.suspend();
   }
 
   async resumeFromFocus() {
+    this.isPaused = false;
     if (this.wasContextRunningBeforeFocus && this.ctx) await this.ctx.resume();
     this.wasContextRunningBeforeFocus = false;
+    if (this.wantsBgm && this.isBgmEnabled && this.canPlayAudio()) {
+      this.playBGM();
+    }
   }
 
   playJump() {

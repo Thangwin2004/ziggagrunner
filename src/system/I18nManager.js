@@ -103,17 +103,20 @@ export class I18nManager {
     document.title = this.t("document.title");
   }
   setLanguage(language) {
-    if (language !== "en" && language !== "vi") return false;
-    this.hasLocalOverride = true;
+    const normalized = String(language || "")
+      .toLowerCase()
+      .startsWith("vi")
+      ? "vi"
+      : "en";
     try {
-      globalThis.localStorage?.setItem(STORAGE_KEY, language);
+      globalThis.localStorage?.setItem(STORAGE_KEY, normalized);
     } catch {
       /* Keep the session choice. */
     }
-    if (this.language === language) return false;
-    this.language = language;
+    if (this.language === normalized) return false;
+    this.language = normalized;
     this.applyDocumentLanguage();
-    for (const listener of this.listeners) listener(language);
+    for (const listener of this.listeners) listener(normalized);
     return true;
   }
   t(key, variables = {}) {

@@ -110,11 +110,17 @@ async function initializeGame() {
     onResume: focusPause.resumeFromHost,
     onMute: () => game?.audio.setHostMuted(true),
     onUnmute: () => game?.audio.setHostMuted(false),
+    onLocale: (locale) => i18n.setLanguage(locale),
   });
 
   winkGame.observe(() => {
     document.documentElement.lang = i18n.language;
   });
+
+  if (focusPause.isPaused()) {
+    stopRenderLoop();
+    game?.audio.pauseForFocus();
+  }
 }
 
 void initializeGame();

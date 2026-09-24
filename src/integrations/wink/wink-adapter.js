@@ -113,6 +113,7 @@ export class WinkGameIntegration {
       capabilities,
       lifecycle: {
         ...this.#state.lifecycle,
+        paused: Boolean(sdk?.paused),
         muted: Boolean(sdk?.muted),
       },
       error: null,
@@ -272,6 +273,31 @@ export class WinkGameIntegration {
     return this.#state.phase === "ready_authenticated";
   }
 
+  setLocale(locale) {
+    const normalized = String(locale || "")
+      .toLowerCase()
+      .startsWith("vi")
+      ? "vi"
+      : "en";
+    const sdk = this.#sdk;
+    const sdkLoader = globalThis.window?.Wink;
+    if (typeof sdk?.setLocale === "function") {
+      sdk.setLocale(normalized);
+    } else if (typeof sdkLoader?.setLocale === "function") {
+      sdkLoader.setLocale(normalized);
+    } else {
+      this.#state.locale = normalized;
+      this.#notify();
+      if (this.#ready) {
+        void this.#ready.then((resolvedSdk) => {
+          if (typeof resolvedSdk?.setLocale === "function") {
+            resolvedSdk.setLocale(normalized);
+          }
+        });
+      }
+    }
+  }
+
   observe(listener) {
     this.#observers.add(listener);
     listener(this.#state);
@@ -296,6 +322,9 @@ export class WinkGameIntegration {
       register("mute", handlers.onMute);
       register("unmute", handlers.onUnmute);
       register("locale", handlers.onLocale);
+
+      if (sdk.paused) handlers.onPause?.();
+      else handlers.onResume?.();
 
       if (sdk.muted) handlers.onMute?.();
       else handlers.onUnmute?.();

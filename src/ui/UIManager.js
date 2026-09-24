@@ -122,7 +122,7 @@ export class UIManager {
       'min-height:44px;max-width:100%;padding:8px 12px;border:2px solid #E6D2BF;border-radius:12px;background:#FFF9F1;color:#403442;font:600 14px "Be Vietnam Pro",sans-serif;cursor:pointer;';
     select.addEventListener("change", () => {
       this.playClickSound();
-      i18n.setLanguage(select.value);
+      winkGame.setLocale(select.value);
     });
     return select;
   }
