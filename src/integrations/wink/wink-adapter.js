@@ -323,11 +323,15 @@ export class WinkGameIntegration {
       register("unmute", handlers.onUnmute);
       register("locale", handlers.onLocale);
 
-      if (sdk.paused) handlers.onPause?.();
-      else handlers.onResume?.();
+      if (sdk.paused) {
+        handlers.onPause?.();
+      }
 
-      if (sdk.muted) handlers.onMute?.();
-      else handlers.onUnmute?.();
+      if (sdk.muted) {
+        handlers.onMute?.();
+      } else {
+        handlers.onUnmute?.();
+      }
       handlers.onLocale?.(sdk.locale);
     });
 

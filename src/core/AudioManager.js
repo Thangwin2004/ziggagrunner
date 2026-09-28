@@ -36,7 +36,12 @@ export class AudioManager {
     window.addEventListener("touchstart", activateAudio, { passive: true });
     window.addEventListener("keydown", activateAudio, { passive: true });
     window.addEventListener("focus", () => {
-      if (this.wantsBgm && this.isBgmEnabled && this.canPlayAudio()) {
+      if (
+        this.hasUserInteracted &&
+        this.wantsBgm &&
+        this.isBgmEnabled &&
+        this.canPlayAudio()
+      ) {
         this.playBGM();
       }
     });
@@ -48,7 +53,13 @@ export class AudioManager {
   canPlayAudio() {
     if (this.isHostMuted || this.isPaused) return false;
     const inIframe = window.self !== window.top;
-    if (inIframe && !this.hasUserInteracted && !document.hasFocus()) {
+    if (inIframe && !this.hasUserInteracted) {
+      return false;
+    }
+    if (
+      typeof document !== "undefined" &&
+      document.visibilityState === "hidden"
+    ) {
       return false;
     }
     return true;
